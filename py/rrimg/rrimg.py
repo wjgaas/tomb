@@ -66,7 +66,7 @@ class Robot:
         return cached.keys()
 
     def run2(self, urls):
-        assert(self.pageNum = 1)
+        assert(self.pageNum == 1)
         if os.path.exists(self.saved):
             fp = open(self.saved)
             cached = json.load(fp)
@@ -112,14 +112,14 @@ class Robot:
             end = (i + 1) * item / threadNum
             if i == (threadNum - 1):
                 end = item - 1
-            pool.append(threading.Thread(target=_download,
+            pool.append(threading.Thread(target=wget_download,
                         args=(js, start, end)))
         for i in range(0, threadNum):
             pool[i].start()
         for i in range(0, threadNum):
             pool[i].join()
 
-def _download(js, s, e):
+def wget_download(js, s, e):
     def fixUrl2FileName(url):
         if url.startswith('http://'):
             url = url[len('http://'):]
@@ -161,8 +161,8 @@ def downloadPhoto():
     robot.download()
 
 if __name__ == '__main__':
-    _createPhotoList = False
-    _createPhotoLink = False
+    _createPhotoList = True
+    _createPhotoLink = True
     _downloadPhoto = True
 
     if _createPhotoList :
