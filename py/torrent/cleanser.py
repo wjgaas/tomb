@@ -13,13 +13,13 @@ pp = pprint.PrettyPrinter(indent=2)
 def is_video(ext_name):
     return ext_name in ('.wmv','.avi','.rmvb','.rm','.mkv','.mp4',)
 
-def cleanse(infame, outfname, prefix):
+def cleanse(infame, outfname, prefix, keep):
     s = open(infname).read()
     d = bdecode(s)
     #pp.pprint(d)
     # print '--------------------'
     # pp.pprint(d['info']['files'])
-    
+
     d['info']['name'] = prefix
     d['info']['name.utf-8'] = prefix
     if 'comment' in d:
@@ -35,7 +35,8 @@ def cleanse(infame, outfname, prefix):
                 name = f['path'][-1]
                 (_,ext) = os.path.splitext(name)
                 if is_video(ext):
-                    name = '%s-%d%s'%(prefix, idx, ext)
+                    if (not keep):
+                        name = '%s-%d%s'%(prefix, idx, ext)
                     idx += 1
                     path = [name]
                     f['path'] = path
@@ -56,8 +57,24 @@ def cleanse(infame, outfname, prefix):
     open(outfname, 'w').write(s)
 
 if __name__ == '__main__':
-    infname = sys.argv[1]
-    prefix = 'AV-' + sys.argv[2]
+    argc = 1
+    prefix = 'AV-%03d'%(random.randint(0,1000))
+    keep = False
+    while argc < len(sys.argv):
+        argv = sys.argv[argc]
+        if argv == '-i':
+            infname = sys.argv[argc + 1]
+            argc += 1
+        elif argv == '-o':
+            prefix = sys.argv[argc + 1]
+            argc += 1
+        elif argv == '-k':
+            keep = True
+        else:
+            print 'torrent cleanser'
+            print 'usage: %s -i <input-file> -o <output-file> [-k]'%(sys.argv[0])
+            exit(-1)
+        argc += 1
     (path, _ ) = os.path.split(infname)
     outfname = os.path.join(path, '%s.torrent'%(prefix))
-    cleanse(infname, outfname, prefix)
+    cleanse(infname, outfname, prefix, keep)
