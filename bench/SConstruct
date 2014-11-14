@@ -1,0 +1,14 @@
+#!/usr/bin/env python
+#coding:gbk
+#Copyright (C) dirlt
+
+import glob
+import os
+env=Environment(CPPPATH=['..'],
+                CXXFLAGS='-W -Wall -g -Werror -O2',
+                LIBPATH=['../common'],
+                LIBS=['common',
+                      'rt',
+                      'pthread'])
+for x in glob.glob('*.cc'):
+    env.Program(os.path.splitext(x)[0]+'.exe',[x])
