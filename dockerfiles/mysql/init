@@ -31,9 +31,10 @@ if [ ! -d /home/mysql/mysql ]; then
   echo "GRANT ALL ON *.* TO 'dirlt'@'%' IDENTIFIED BY 'uvw123' WITH GRANT OPTION;" | mysql -uroot
   echo "FLUSH PRIVILEGES;" | mysql -uroot
 
-  echo "Evertying is done"
 else
   echo "Starting MySQL server..."
   /usr/bin/mysqld_safe >/dev/null 2>&1 &
+
 fi
 
+echo "Evertying is done"

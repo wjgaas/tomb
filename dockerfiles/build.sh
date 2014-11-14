@@ -8,6 +8,10 @@ build_mysql() {
     build_base
     docker build -t tomb/ubuntu:mysql mysql
 }
+build_redis() {
+    build_base
+    docker build -t tomb/ubuntu:redis redis
+}
 
 cmd=${1:-"base"}
 case $1 in 
@@ -16,6 +20,9 @@ case $1 in
         ;;
     mysql)
         build_mysql
+        ;;
+    redis)
+        build_redis
         ;;
     *)
         build_base
