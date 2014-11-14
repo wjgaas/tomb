@@ -31,9 +31,9 @@ BEGIN_DECLS
 
 const char interp[] __attribute__((section(".interp"))) = LD_SO_PATH;
 void so_main() {
-  printf("LD_SO_PATH : %s\n", LD_SO_PATH);
-  printf("BuildDate : %s\n", BUILD_DATE);
-  exit(0);
+    printf("LD_SO_PATH : %s\n", LD_SO_PATH);
+    printf("BuildDate : %s\n", BUILD_DATE);
+    exit(0);
 }
 
 END_DECLS
