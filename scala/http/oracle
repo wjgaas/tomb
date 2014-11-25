@@ -8,7 +8,7 @@ JAR_NAME="http.jar"
 APP_VERSION="0.0.1"
 
 # TODO(dirlt): main class.
-JAR_MAIN="com.dirlt.scala.http.HttpServer"
+JAR_MAIN="com.dirlt.scala.finagle.http.HttpServer"
 
 # TODO(dirlt): jvm options.
 GC_OPTS="-XX:+UseConcMarkSweepGC -XX:+UseParNewGC"

@@ -35,7 +35,7 @@ class %(mainClass)sServer(config:%(mainClass)sConfig) extends OstrichService {
       Future(response)
     }
   }
-  
+
   def start() {
     log.debug("start service...")
     server = ServerBuilder()

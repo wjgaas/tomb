@@ -1,4 +1,4 @@
-package com.dirlt.scala.http
+package com.dirlt.scala.finagle.http
 
 import com.twitter.ostrich.admin.{RuntimeEnvironment, Service => OstrichService}
 import com.twitter.finagle.builder.{ServerBuilder, Server}
@@ -35,7 +35,7 @@ class HttpServer(config:HttpConfig) extends OstrichService {
       Future(response)
     }
   }
-  
+
   def start() {
     log.debug("start service...")
     server = ServerBuilder()
