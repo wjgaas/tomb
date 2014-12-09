@@ -2,10 +2,6 @@
 #coding:utf-8
 #Copyright (C) dirlt
 
-#!/usr/bin/env python
-#coding:utf-8
-#Copyright (C) dirlt
-
 class Solution:
     # @param candidates, a list of integers
     # @param target, integer
