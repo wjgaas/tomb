@@ -25,6 +25,7 @@ public:
             }
             // largest.
             int l = prices[x - 1];
+            result += l - s;
             x--;
         }
         return result;
