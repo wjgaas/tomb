@@ -19,7 +19,7 @@ struct Point {
 };
 class Solution {
 public:
-    int maxPoints(vector<Point> &points) {
+    int maxPoints(vector<Point>& points) {
         vector<Point> nps;
         vector<int> cnts;
 
@@ -56,7 +56,7 @@ public:
                 for(int k = j + 1; k < n; k++) {
                     int dky = (nps[k].y - nps[j].y);
                     int dkx = (nps[k].x - nps[j].x);
-                    if (dky* dx == dkx * dy) {
+                    if (dky * dx == dkx * dy) {
                         sum += cnts[k];
                     }
                 }

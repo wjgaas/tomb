@@ -12,7 +12,7 @@ using namespace std;
 
 class Solution {
 public:
-    int evalRPN(vector<string> &tokens) {
+    int evalRPN(vector<string>& tokens) {
         stack<int> si;
         for(int i = 0; i < tokens.size(); i++) {
             const string& s = tokens[i];
