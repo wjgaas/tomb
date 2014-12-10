@@ -13,14 +13,14 @@ class Solution:
         mask = []
         for i in range(0, n):
             mask.append([0] * m)
-        
+
         def dfs(loc, seen):
             (r, c) = loc
             sn = len(seen)
 
             if sn == wn and seen == word: return True
             if sn >= wn: return False
-                
+
             ps = []
             if r > 0: ps.append((r-1, c))
             if c > 0: ps.append((r, c-1))
@@ -44,10 +44,10 @@ class Solution:
                         return True
                     mask[r][c] = 0
         return False
-    
+
 s = Solution()
 board = ["aaaa", "aaaa", "aaaa"]
 word = "aaaaaaaaaaa"
 board = ["a"]
 word = "a"
-print s.exist(board, word)            
+print s.exist(board, word)
