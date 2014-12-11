@@ -27,76 +27,20 @@ public:
         dict.insert(end); // insert destionation.
         int n = start.size();
 
-        // note(dirlt): maybe this problem don't judge right, I think.
-        // when I return this value directly, it still timeout, so...
-        // if (start == "nape" && end == "mild") return 6;
-        if (n == 1) {
-            while (!Q.empty()) {
-                StringIntPair p = Q.front();
-                Q.pop();
-                if (p.first == end) return p.second;
-                std::vector< string> ss; // for remove.
-                for(unordered_set<string>::const_iterator it = dict.begin(); it != dict.end(); ++it) {
-                    const string& cmp = *it;
-                    if (diff1(p.first, cmp)) {
-                        Q.push(StringIntPair(cmp, p.second + 1));
-                        ss.push_back(cmp);
-                    }
-                }
-                for (int i = 0; i < ss.size(); i++) {
-                    dict.erase(ss[i]);
-                }
-            }
-        } else {
-            // aux index.
-            std::set< string > fwd;
-            std::set< string > bwd;
+        while (!Q.empty()) {
+            StringIntPair p = Q.front();
+            Q.pop();
+            if (p.first == end) return p.second;
+            std::vector< string> ss; // for remove.
             for(unordered_set<string>::const_iterator it = dict.begin(); it != dict.end(); ++it) {
-                fwd.insert(*it);
-                std::string s = *it;
-                std::reverse(s.begin(), s.end());
-                bwd.insert(s);
+                const string& cmp = *it;
+                if (diff1(p.first, cmp)) {
+                    Q.push(StringIntPair(cmp, p.second + 1));
+                    ss.push_back(cmp);
+                }
             }
-
-            while(!Q.empty()) {
-                StringIntPair p = Q.front();
-                Q.pop();
-                if (p.first == end) return p.second;
-                std::vector< string> ss; // for remove.
-
-                string prefix;
-                prefix += p.first[0];
-                string postfix;
-                postfix += p.first[n - 1];
-
-                printf("process %s\n", p.first.c_str());
-                set<string>::const_iterator it = fwd.lower_bound(prefix);
-                for(; it != fwd.end() && (*it)[0] == p.first[0]; ++it) {
-                    const string& cmp = *it;
-                    printf("consider %s\n", cmp.c_str());
-                    if (diff1(p.first, cmp)) {
-                        Q.push(StringIntPair(cmp, p.second + 1));
-                        ss.push_back(cmp);
-                    }
-                }
-
-                it = bwd.lower_bound(postfix);
-                for (; it != bwd.end() && (*it)[0] == p.first[n - 1]; ++it) {
-                    string cmp = *it;
-                    printf("consider %s\n", cmp.c_str());
-                    std::reverse(cmp.begin(), cmp.end());
-                    if (diff1(p.first, cmp)) {
-                        Q.push(StringIntPair(cmp, p.second + 1));
-                        ss.push_back(cmp);
-                    }
-                }
-
-                for(int i = 0; i < ss.size(); i++) {
-                    fwd.erase(ss[i]);
-                    string s = ss[i];
-                    std::reverse(s.begin(), s.end());
-                    bwd.erase(s);
-                }
+            for (int i = 0; i < ss.size(); i++) {
+                dict.erase(ss[i]);
             }
         }
         return 0;
