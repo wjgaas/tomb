@@ -7,7 +7,7 @@ class Solution:
     def convert(self, s, nRows):
         ns = ''
         n = len(s)
-        if n <= nRows: return s
+        if nRows == 1 or n <= nRows: return s
         for r in xrange(0, nRows):
             idx = r
             ns += s[idx]
