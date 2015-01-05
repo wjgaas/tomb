@@ -28,4 +28,6 @@ GSYMS
 GTAGS
 *.cookies
 *.jfif
+*.db
+py/query-10086/att
 
