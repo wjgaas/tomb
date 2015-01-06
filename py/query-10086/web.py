@@ -104,11 +104,9 @@ def run(env, start_response):
         start_response('500 Error', [('Content-Type','text/html')])
         return ('Internal Server Error',)
 
-from wsgiref.validate import validator
-from wsgiref.simple_server import make_server
-def main():
+if __name__ == '__main__':
+    from wsgiref.validate import validator
+    from wsgiref.simple_server import make_server
     vrun=validator(run)
     httpd = make_server('', 8000, vrun)
     httpd.serve_forever()
-
-main()
