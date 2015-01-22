@@ -93,7 +93,7 @@ def train(tr):
     tr_x, tt_x, tr_y, tt_y = train_test_split(X, Y, test_size = 0.2, random_state = 0)
     print('train_size = %d, test_size = %d' % (tr_y.shape[0], tt_y.shape[0]))
     tuned_parameters = [{'kernel': ['rbf'], 'gamma': [ 1e-5, 1e-4, 1e-3, 1e-2], 'C': [1, 10, 100]}]
-    clf = GridSearchCV(SVC(), tuned_parameters, cv = 6)
+    clf = GridSearchCV(SVC(), tuned_parameters, cv = 5)
     clf.fit(tr_x, tr_y)
     print("Best parameters set found on development set:")
     print(clf.best_estimator_)
