@@ -19,7 +19,6 @@
 a.out
 target/
 scala/http/log
-
 cscope.out
 cscope.files
 GPATH
@@ -27,5 +26,5 @@ GRTAGS
 GSYMS
 GTAGS
 *.db
-py/query-10086/att
-
+py/sim-svr/static
+kaggle/*/submission.csv
