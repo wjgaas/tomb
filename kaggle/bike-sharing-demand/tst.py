@@ -112,7 +112,7 @@ def print_best_estimator(reg):
     print("Grid scores on development set:")
     for params, mean_score, scores in reg.grid_scores_:
         print("%0.3f (+/-%0.03f) for %r" % (mean_score, scores.std(), params))
-
+        
 class Reg:
     def __init__(self, r0, r1):
         self.r0 = r0
@@ -128,6 +128,7 @@ class Reg:
         ys[ys < 0] = 0
         return ys
 
+# 不同的融合方式    
 class Average:
     def __init__(self, regs):
         self.regs = regs
