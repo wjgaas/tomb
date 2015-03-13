@@ -117,12 +117,13 @@ class Reg:
     def __init__(self, r0, r1):
         self.r0 = r0
         self.r1 = r1
+        self.select = (0,1,2,3,5,6,7,8,9,10)
     def fit(self, xs, ys):
         self.r0.fit(xs, ys[:,0])
-        self.r1.fit(xs, np.log(ys[:,1] + 1))
+        self.r1.fit(xs[:,self.select], np.log(ys[:,1] + 1))
     def predict(self, xs):
         ys0 = self.r0.predict(xs)
-        ys1 = np.exp(self.r1.predict(xs)) - 1
+        ys1 = np.exp(self.r1.predict(xs[:,self.select])) - 1
         ys = np.intp(np.around(ys0 + ys1))
         ys[ys < 0] = 0
         return ys
@@ -133,15 +134,24 @@ class Average:
     def fit(self, xs, ys):
         for r in self.regs:
             r.fit(xs, ys)
+    # def predict(self, xs):
+    #     ys0 = np.zeros(xs.shape[0])
+    #     ys1 = np.zeros(xs.shape[0])
+    #     for r in self.regs:
+    #         r0 = r.r0
+    #         r1 = r.r1
+    #         ys0 += r0.predict(xs)
+    #         ys1 += np.exp(r1.predict(xs)) - 1
+    #     ys = np.intp(np.around((ys0 + ys1) * 1.0 / len(self.regs)))
+    #     ys[ys < 0] = 0
+    #     return ys
+
     def predict(self, xs):
-        ys0 = np.zeros(xs.shape[0])
-        ys1 = np.zeros(xs.shape[0])
+        ys = np.zeros(xs.shape[0])
         for r in self.regs:
-            r0 = r.r0
-            r1 = r.r1
-            ys0 += r0.predict(xs)
-            ys1 += np.exp(r1.predict(xs)) - 1
-        ys = np.intp(np.around((ys0 + ys1) * 1.0 / len(self.regs)))
+            ys += r.predict(xs)
+        ys *= 1.0 / len(self.regs)
+        ys = np.intp(np.around(ys))
         ys[ys < 0] = 0
         return ys
 
@@ -222,9 +232,9 @@ def select():
     print('training ...')
     reg_rf = select_rf(tr)
     reg = reg_rf
-    # reg_gbdt = select_gbdt(tr)
-    # reg = reg_gbdt
-    # reg = Average([reg_rf, reg_gbdt])
+    reg_gbdt = select_gbdt(tr)
+    reg = reg_gbdt
+    reg = Average([reg_rf, reg_gbdt])
     cv = 1
     if cv:
         scores = cross_val(reg, tr, 10)
