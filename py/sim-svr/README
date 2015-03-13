@@ -1,0 +1,36 @@
+首先安装redis和python-redis. 本地上必须部署redis实例(port=6379), 使用redis db=1的数据库做存储。
+
+-----
+
+离线程序分为两个版本: console.py对应命令行, web.py对应网页版本。相对来说web版本使用效率可能会更高一些，允许多人通过网页访问输入。
+
+工作原理是从phone-boook.db不断读取没有标记的电话号码，查询这些电话号码的余额，写入数据库，直到所有电话号码都标记。
+
+console需要安装PIL组件，否则不能显示图片。
+
+启动网页版本的方法是
+1. sh setup.sh
+2. gunicorn -w 64 web:run
+3. 访问localhost:8000
+
+-----
+
+在线程序是一个webserver，需要安装flask，文件是svr.py. 请求过程如下：
+
+1. 客户使用手机号码请求 http://host/init?phone=<phone>[&cb=<callback>].
+- 其中cb为可选字段，如果带上cb的话那么返回jsonp格式，否则返回json格式。
+- json数据有下面三种可能：
+a. {'code': 1, 'msg':'get captcha faild'} 表示查询验证码失败（内部已经做过重试）
+b. {'code':0, 'msg':'bal', 'data': res} 系统中已经缓存了余额信息(res)。超时时间为1天。
+c. {'code':0, 'msg':'token', 'data': res} 系统返回token(res). 用于下一阶段的请求。
+- 如果客户端拿到token的话，那么验证码图片位置在 http://host/static/<token>.jpg
+
+2. 客户使用token和验证码code请求 http://host/query?token=<token>&code=<code>[&cb=<callback>]
+- cb作用和上面一样
+- json数据有下面两种可能：
+a. {'code': 1, 'msg': 'query balance failed'} 表示查询余额失败（内部已经做过重试）。但是客户端可以继续对这个URL做重试, token超时时间10分钟。
+b. {'code': 0, 'msg': 'bal', 'data': res[1]} 表示查询成功，余额在'data'字段。
+
+测试在线程序可以使用./svr.py直接运行，作为产品部署的话最好使用WSGI容器如gunicorn.
+1. gunicorn -w 64 svr:app
+2. 访问localhost:8000
