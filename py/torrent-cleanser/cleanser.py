@@ -11,7 +11,7 @@ from bencode import bencode, bdecode
 pp = pprint.PrettyPrinter(indent=2)
 
 def is_video(ext_name):
-    return ext_name in ('.wmv','.avi','.rmvb','.rm','.mkv','.mp4','.3gp','.MOV','.mkv','.flv',)
+    return ext_name in ('.wmv','.avi','.rmvb','.rm','.mkv','.mp4','.3gp','.MOV','.mkv','.flv','.mp4',)
 
 def cleanse(infame, outfname, prefix, keep):
     s = open(infname).read()

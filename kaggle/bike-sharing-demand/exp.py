@@ -29,6 +29,18 @@ def read_in(s, test = False):
     if not test: return (p, int(ss[9]), int(ss[10]))
     else: return (p, ss[0])
 
+# 做直方图统计
+# 使用binning
+def hist1(ts, mn, mx, step):
+    ss = np.arange(mn, mx, step)
+    ss2 = zip(ss[:-1], ss[1:])
+    return (ss[1:], np.array([ts[np.logical_and(ts >= l, ts < h)].shape[0] for (l,h) in ss2]))
+# 不使用binning
+def hist2(ts):
+    d = {}
+    for t in ts: d[t] = (ts == t).sum()
+    return d
+
 def read_train():
     f = open('train.csv')
     xs = []
@@ -175,12 +187,12 @@ def select():
     print('loading training set ...')
     tr = read_train()
     print('training ...')
-    reg_rf = select_rf(tr)
-    reg = reg_rf
+    # reg_rf = select_rf(tr)
+    # reg = reg_rf
     reg_gbdt = select_gbdt(tr)
     reg = reg_gbdt
     reg = Combiner([reg_rf, reg_gbdt])
-    cv = 0
+    cv = 1
     if cv:
         scores = cross_val(reg, tr)
         print scores
