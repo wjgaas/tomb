@@ -14,7 +14,6 @@ def read_ft(fname):
         s = s.strip()
         xs.append(map(lambda x: int(x),s.split(' ')))
     f.close()
-    # 选择特征非常重要:
     # 选择横竖以及正反对角线上1的分布作为feature.
     n = len(xs)
     xs2 = []
@@ -64,11 +63,11 @@ def read_ft(fname):
 def load_tr():
     ys = []
     xs = []
-    mp = (('1',1), ('2',3),('3',5))
+    mp = [1,2,3]
     for p in mp:
-        (tag, y) = p
+        tag = str(p)
         for f in os.listdir('tr/' + tag):
-            ys.append(y)
+            ys.append(p)
             x = read_ft('tr/' + tag + '/' + f)
             xs.append(x)
     return (np.array(xs), np.array(ys))
@@ -78,8 +77,8 @@ def load_tt():
     xs = []
     for f in range(1, 31):
         x = read_ft('tt/' + str(f) + '.txt')
-        xs.append((f, x))
-    return xs
+        xs.append(x)
+    return np.array(xs)
 
 from sklearn import svm
 from sklearn.svm import SVC
@@ -88,34 +87,42 @@ from sklearn.grid_search import GridSearchCV
 from sklearn.metrics import classification_report
 
 def train(tr):
-    print('------------------------------')
     (X, Y) = tr
-    tr_x, tt_x, tr_y, tt_y = train_test_split(X, Y, test_size = 0.2, random_state = 0)
-    print('train_size = %d, test_size = %d' % (tr_y.shape[0], tt_y.shape[0]))
-    tuned_parameters = [{'kernel': ['rbf', 'linear'], 'gamma': [ 1e-4, 1e-3, 1e-2], 'C': [1, 10, 100]}]
-    clf = GridSearchCV(SVC(), tuned_parameters, cv = 8)
-    clf.fit(tr_x, tr_y)
+
+    # 使用cross validation来做参数选择
+    tuned_parameters = [{'kernel':['linear'], 'C':[1, 10, 100]},                        
+                        {'kernel': ['rbf'], 'gamma': [1e-4, 1e-3, 1e-2], 'C': [1, 10, 100]}]
+    clf = GridSearchCV(SVC(), tuned_parameters, cv = 10)
+    clf.fit(X, Y)
     print("Best parameters set found on development set:")
     print(clf.best_estimator_)
     print("Grid scores on development set:")
     for params, mean_score, scores in clf.grid_scores_:
         print("%0.3f (+/-%0.03f) for %r"
             % (mean_score, scores.std() / 2, params))
+    # 选择最好的分类器
+    clf = clf.best_estimator_
+
+    # 看看最好分类器效果如何
+    tr_x, tt_x, tr_y, tt_y = train_test_split(X, Y, test_size = 0.2, random_state = 0)
+    clf.fit(tr_x, tr_y)
     print("Detailed classification report:")
     print("The model is trained on the full development set.")
     print("The scores are computed on the full evaluation set.")
     y_true, y_pred = tt_y, clf.predict(tt_x)
     print(classification_report(y_true, y_pred))
-    print('------------------------------')
+
+    # 使用全部数据集合来训练最终模型.
+    clf.fit(X, Y)
     return clf
 
 def test(clf, tt):
-    print('------------------------------')
-    # 人工识别出来的
-    y_true = [1,1,5,3,1,3,3,5,1,3,1,5,5,1,3,3,5,5,5,3,5,1,1,3,3,5,1,3,5,1]
-    preds = clf.predict(map(lambda x: x[1], tt))
-    print(classification_report(y_true, preds))
-    print('------------------------------')
+    y_pred = clf.predict(tt)
+    f = open('submission.csv','w')
+    f.write('Id,Prediction\n')
+    for i in range(1, 31):
+        f.write('%d,%d\n' % (i, y_pred[i-1]))
+    f.close()
 
 def main():
     print('loading training set ...')
