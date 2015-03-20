@@ -18,7 +18,7 @@ RUN mkdir -p /var/run/sshd
 
 # Install basic packages
 USER root
-RUN apt-get install -y git python vim
+#RUN apt-get install -y git python vim
 
 # Set up basic env
 USER dirlt
