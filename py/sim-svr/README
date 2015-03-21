@@ -31,6 +31,27 @@ c. {'code':0, 'msg':'token', 'data': res} 系统返回token(res). 用于下一�
 a. {'code': 1, 'msg': 'query balance failed'} 表示查询余额失败（内部已经做过重试）。但是客户端可以继续对这个URL做重试, token超时时间10分钟。
 b. {'code': 0, 'msg': 'bal', 'data': res[1]} 表示查询成功，余额在'data'字段。
 
+
 测试在线程序可以使用./svr.py直接运行，作为产品部署的话最好使用WSGI容器如gunicorn.
 1. gunicorn -w 64 svr:app
 2. 访问localhost:8000
+
+-----
+
+note(dirlt @ 2015-03-20): 支持欧飞充值接口 http://ofapi.1000.com/ . 主要代码都在ofpay.py这个文件里面. 我将充值接口接入到svr.py之后，多增加了两个接口。
+
+todo(dirlt): 充值接口需要考虑安全性! 可以考虑用HTTPS + POST
+
+1. 充值请求 http://host/charge?phone=<phone>&uid=<uid>[&cardnum=<cardnum>][&cb=<callback>].
+- uid 表示本地订单请求必须唯一，可以考虑以支付宝返回的订单号为准
+- cardnum 表示充值金额，理论上支持[1,2,5,10,20,30,50,100,300]. 但是我们限制金额必须>=30, 因为<30的话会有额外收费。
+- json数据格式为{code : <code>, msg: <msg> }
+a. code = -1, msg = 'gateway error' 表示欧飞网关错误
+b. code = -2, msg = <欧飞返回的错误信息>
+c. code = -3, msg = 'charged failed' 表示充值失败
+d. code = 0, msg = 'charging' 表示充值成功，但是还没有到账
+e. code = 1, msg = 'done' 表示充值成功且到账
+
+2. 查询历史 http://host/history?phone=<phone>[&period=<period>][&limit=<limit>][&cb=<callback>]
+- period 表示查询最近多长时间，默认是30天
+- limit 表示查询最近多少条记录，默认是10条，最大30

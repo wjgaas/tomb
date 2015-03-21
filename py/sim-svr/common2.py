@@ -131,6 +131,7 @@ class Process:
 
         # todo(dirlt): generate uid for this query.
         uid = str(uuid.uuid4())
+        uid = uid.replace('-','')
 
         req = conn.request('GET', '/ImgDisp', '', headers)
         res = conn.getresponse()
@@ -256,7 +257,7 @@ class Process:
 
     def get_phone_balance(self, cm, cp, headers, phone, code):
         SAMLart = self.step2(cm, cp, headers, phone, code)
-        if not SAMLart: return
+        if not SAMLart: return 'mismatch' # 密码，用户名，验证码不匹配
         SAMLart = self.step3(cm, cp, headers, SAMLart)
         if not SAMLart: return
         self.step4(cm, cp, headers, SAMLart)
@@ -280,12 +281,13 @@ class Process:
         cm = Session()
         info = self.st.get_query_session(uid)
         if not info: return (False, 'invalid')
-        self.st.del_query_session(uid)
+        # self.st.del_query_session(uid)
         info = json.loads(info)
         cm.from_json(info['sinfo'])
         phone = info['phone']
         res = self.get_phone_balance(cm, self.cp, self.cp.default_headers(), phone, code)
         if not res: return (False, 'exception')
+        if res == 'mismatch': return (False, 'mismatch')
         bal = res[0]
         self.st.set_phone_balance(phone, bal)
 
@@ -297,7 +299,7 @@ class Process:
         return (True, bal)
 
 def test():
-    p = Process()
+    p = Process(True)
     phone = raw_input('input phone > ').strip()
     (ok, res) = p.above_half(phone)
     if ok:
@@ -308,10 +310,8 @@ def test():
     im = Image.open('./static/%s.jpg' % (p.captcha_filename(uid)))
     im.show()
     code = raw_input('input code > ').strip()
-    res = p.bottom_half(uid, code)
-    if res in ('invalid', 'exception'):
-        print 'query failed'
-        return
+    (ok, res) = p.bottom_half(uid, code)
+    if not ok: print 'query failed: %s' % res; return
     print 'balance = ' , res
 
 if __name__ == '__main__':

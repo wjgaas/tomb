@@ -33,7 +33,8 @@ def retry(func, args, cond, count = 3):
     return res
 
 def make_resp(js, cb):
-    s = json.dumps(js)
+    if type(js) == 'str': s = js
+    else: s = json.dumps(js)
     if cb:
         s = cb + '(%s)' % s
         resp = make_response(s)
@@ -45,8 +46,9 @@ def make_resp(js, cb):
 
 @app.route('/init', methods = ['GET'])
 def init():
-    phone = request.args.get('phone').decode('utf-8')
-    cb = request.args.get('cb', '').decode('utf-8')
+    phone = request.args.get('phone')
+    cb = request.args.get('cb', '')
+    assert(phone)
     res = retry(p.above_half, (phone,), lambda ok, res: True)
     if not res:
         # 查询验证码失败
@@ -61,13 +63,16 @@ def init():
 
 @app.route('/query', methods = ['GET'])
 def query():
-    token = request.args.get('token').decode('utf-8')
-    code = request.args.get('code').decode('utf-8')
-    cb = request.args.get('cb', '').decode('utf-8')
+    token = request.args.get('token')
+    code = request.args.get('code')
+    cb = request.args.get('cb', '')
+    assert(token and code)
     res = retry(p.bottom_half, (token, code), lambda ok, res: ok)
     if not res or not res[0]:
         # 查询余额失败
-        js = {'code': 1, 'msg': 'query balance failed'}
+        msg = 'query balance failed'
+        if res: msg += ': %s' % res[1]
+        js = {'code': 1, 'msg': msg}
     else:
         js = {'code': 0, 'msg': 'bal', 'data': res[1]}
     return make_resp(js, cb)
