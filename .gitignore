@@ -28,3 +28,4 @@ GTAGS
 *.db
 py/sim-svr/static
 kaggle/*/submission.csv
+kaggle/digit-recognizer/*.csv

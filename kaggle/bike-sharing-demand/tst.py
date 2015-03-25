@@ -6,6 +6,8 @@ import numpy as np
 import datetime
 import pylab as pl
 
+# http://www.kaggle.com/c/bike-sharing-demand
+
 def read_in(s, test = False):
     ss = s.split(',')
     (dt, tm) = ss[0].split(' ')
@@ -28,18 +30,6 @@ def read_in(s, test = False):
     p = [weekday, hour, year - 2011, season, holiday, wkday, weather, temp, atemp, humidity, windspd, day]
     if not test: return (p, int(ss[9]), int(ss[10]))
     else: return (p, ss[0])
-
-# 做直方图统计
-# 使用binning
-def hist1(ts, mn, mx, step):
-    ss = np.arange(mn, mx, step)
-    ss2 = zip(ss[:-1], ss[1:])
-    return (ss[1:], np.array([ts[np.logical_and(ts >= l, ts < h)].shape[0] for (l,h) in ss2]))
-# 不使用binning
-def hist2(ts):
-    d = {}
-    for t in ts: d[t] = (ts == t).sum()
-    return d
 
 def read_train():
     f = open('train.csv')
