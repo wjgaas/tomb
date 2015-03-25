@@ -98,8 +98,7 @@ def train(tr):
     print(clf.best_estimator_)
     print("Grid scores on development set:")
     for params, mean_score, scores in clf.grid_scores_:
-        print("%0.3f (+/-%0.03f) for %r"
-            % (mean_score, scores.std() / 2, params))
+        print("%0.3f (+/-%0.03f) for %r" % (mean_score, scores.std() *2 , params))
     # 选择最好的分类器
     clf = clf.best_estimator_
 
