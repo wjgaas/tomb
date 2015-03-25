@@ -5,6 +5,8 @@
 import numpy as np
 import scipy as sp
 
+# http://www.kaggle.com/c/titanic-gettingStarted
+
 def read_in(s, test = False):
     s = s.strip()
     s = s.replace(', ', '. ')

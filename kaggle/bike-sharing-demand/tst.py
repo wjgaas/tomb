@@ -6,6 +6,8 @@ import numpy as np
 import datetime
 import pylab as pl
 
+# http://www.kaggle.com/c/bike-sharing-demand
+
 def read_in(s, test = False):
     ss = s.split(',')
     (dt, tm) = ss[0].split(' ')
