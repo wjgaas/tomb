@@ -1,7 +1,7 @@
-FROM ubuntu:12.04
+FROM ubuntu:14.04
 
 # Update software repository
-ADD .sources.list /etc/apt/sources.list
+ADD sources.list /etc/apt/sources.list
 RUN apt-get update -y
 
 # Create user dirlt with password dirlt
@@ -18,7 +18,7 @@ RUN mkdir -p /var/run/sshd
 
 # Install basic packages
 USER root
-RUN apt-get install -y git python vim
+# RUN apt-get install -y git python vim
 
 # Set up basic env
 USER dirlt
