@@ -3,7 +3,7 @@
 #Copyright (C) dirlt
 
 import pandas as pd
-from sklearn.cross_validation import train_test_split 
+from sklearn.cross_validation import train_test_split
 from nolearn.lasagne import NeuralNet, BatchIterator
 from lasagne import layers
 from lasagne.nonlinearities import softmax
@@ -16,7 +16,7 @@ from sklearn.utils import shuffle
 
 def plot_loss(net):
     """
-    Plot the training loss and validation loss versus epoch iterations with respect to 
+    Plot the training loss and validation loss versus epoch iterations with respect to
     a trained neural network.
     """
     train_loss = np.array([i["train_loss"] for i in net.train_history_])
@@ -32,8 +32,8 @@ def plot_loss(net):
     pyplot.show()
 
 
-train_df = pd.read_csv('./train.csv') 
-test_df = pd.read_csv('./test.csv') 
+train_df = pd.read_csv('./train.csv')
+test_df = pd.read_csv('./test.csv')
 
 train_label = train_df.values[:, 0]
 train_data = train_df.values[:, 1:]

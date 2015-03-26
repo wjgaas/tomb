@@ -3,10 +3,10 @@
 #Copyright (C) dirlt
 
 import pandas as pd
-from sklearn.cross_validation import train_test_split 
+from sklearn.cross_validation import train_test_split
 from nolearn.lasagne import NeuralNet, BatchIterator
 from lasagne import layers
-from lasagne.nonlinearities import softmax, rectify
+from lasagne.nonlinearities import softmax, rectify, tanh
 from lasagne.updates import momentum, nesterov_momentum, sgd, rmsprop
 import numpy as np
 from matplotlib import pyplot
@@ -15,7 +15,7 @@ from sklearn.utils import shuffle
 
 def plot_loss(net):
     """
-    Plot the training loss and validation loss versus epoch iterations with respect to 
+    Plot the training loss and validation loss versus epoch iterations with respect to
     a trained neural network.
     """
     train_loss = np.array([i["train_loss"] for i in net.train_history_])
@@ -31,8 +31,8 @@ def plot_loss(net):
     pyplot.show()
 
 print 'read data'
-train_df = pd.read_csv('./train.csv') 
-test_df = pd.read_csv('./test.csv') 
+train_df = pd.read_csv('./train.csv')
+test_df = pd.read_csv('./test.csv')
 
 train_label = train_df.values[:, 0]
 train_data = train_df.values[:, 1:]
@@ -46,7 +46,7 @@ train_label = train_label.astype(np.int32)
 train_data, train_label = shuffle(train_data, train_label, random_state = 21)
 
 
-train_data = train_data.reshape(-1, 1, 28, 28) 
+train_data = train_data.reshape(-1, 1, 28, 28)
 test_data = test_data.reshape(-1, 1, 28, 28)
 
 CUDA_CONVNET = False
@@ -67,12 +67,12 @@ cnn = NeuralNet(
         ('dropout1', layers.DropoutLayer),
 
         ('conv2', Conv2DLayer),
-        ('pool2', MaxPool2DLayer), 
-        ('dropout2', layers.DropoutLayer),      
+        ('pool2', MaxPool2DLayer),
+        ('dropout2', layers.DropoutLayer),
 
-        ('conv3', Conv2DLayer),
-        ('pool3', MaxPool2DLayer), 
-        ('dropout3', layers.DropoutLayer),  
+        # ('conv3', Conv2DLayer),
+        # ('pool3', MaxPool2DLayer),
+        # ('dropout3', layers.DropoutLayer),
 
         ('hidden4', layers.DenseLayer),
         ('dropout4', layers.DropoutLayer),
@@ -84,22 +84,23 @@ cnn = NeuralNet(
 
     conv1_num_filters = 32, conv1_filter_size = (3, 3), pool1_ds = (2, 2), dropout1_p = 0.5,
     conv2_num_filters = 64, conv2_filter_size=(2, 2), pool2_ds=(2, 2), dropout2_p = 0.5,
-    conv3_num_filters = 128, conv3_filter_size = (2, 2), pool3_ds = (2, 2), dropout3_p = 0.5, 
+    # conv3_num_filters = 128, conv3_filter_size = (2, 2), pool3_ds = (2, 2), dropout3_p = 0.5,
 
     hidden4_num_units = 500, dropout4_p = 0.5,
 
     output_num_units = 10,  # 10 labels
 
-    conv1_nonlinearity = rectify, conv2_nonlinearity = rectify, conv3_nonlinearity = rectify, 
-    hidden4_nonlinearity = rectify, 
+    conv1_nonlinearity = rectify, conv2_nonlinearity = rectify, conv3_nonlinearity = rectify,
+    hidden4_nonlinearity = rectify,
+    # hidden4_nonlinearity = tanh,
     output_nonlinearity = softmax,  # output layer uses softmax function
-    
+
     # optimization method:
     #update = adagrad,
     update = rmsprop,
     update_learning_rate = 0.0001,
     #update_learning_rate = 0.01,
- 
+
     eval_size = 0.1,
 
     max_epochs = 200,  # we want to train this many epochs
