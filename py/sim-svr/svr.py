@@ -11,6 +11,8 @@ app.debug = True
 
 from common2 import *
 p = Process()
+from ofpay import OFPayer
+ofp = OFPayer()
 
 import traceback
 import json
@@ -76,6 +78,40 @@ def query():
     else:
         js = {'code': 0, 'msg': 'bal', 'data': res[1]}
     return make_resp(js, cb)
+
+# todo(dirlt): 安全性如何保证, 用POST + HTTPS ?
+@app.route('/charge', methods = ['GET'])
+def charge():
+    phone = request.args.get('phone')
+    cardnum = int(request.args.get('cardnum', '2'))
+    uid = request.args.get('uid')
+    cb = request.args.get('cb', '')
+    assert(phone and uid)
+    # uid = ofp.gen_uid()
+    ts = ofp.current_time()
+    ofp.pre_charge(uid, ts, cardnum, phone)
+    kv = ofp.do_charge()
+    (code, msg) = ofp.post_charge(kv)
+    js = {'code': code, 'msg': msg}
+    return make_resp(js, cb)
+
+@app.route('/charge-cb', methods = ['POST'])
+def charge_cb():
+    retcode = int(request.form['ret_code'])
+    spid = request.form['sporder_id']
+    ofp.update_charge_status(spid, retcode)
+    return make_resp('OK', '')
+
+@app.route('/history', methods = ['GET'])
+def history():
+    phone = request.args.get('phone')
+    period = int(request.args.get('period', '30'))
+    limit = int(request.args.get('limit', '10'))
+    cb = request.args.get('cb', '')
+    assert(phone)
+    limit = min(limit, 30)
+    s = ofp.query_charge_history(phone, period, limit)
+    return make_resp(s, cb)
 
 if __name__ == '__main__':
     app.run()
