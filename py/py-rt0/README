@@ -1,7 +1,0 @@
-从kafka中读取数据流进行处理，其中worker.py是包装库，simple.py和dev_ping_req.py是两个示例代码。
-
-python没有什么好的kafka封装，现成比较好用的只有单进程的consumer. 虽然可以使用下面组件继续做一些事情比如分partition给不同的进程来读，但是代价有点高。
-
-另外一个方式可以是，有一个master进程专门从kafka中读取数据，然后这个master进程启动多个worker进程，master将读取的数据交给worker. 但是不太好的地方是worker似乎不太好做commit操作。
-
-或许使用类似storm + python才是更加合适的方式。另外使用这种框架另外一个好处是可以看到metrics.
