@@ -1,7 +1,10 @@
 package com.dirlt.scala.storm
 
+import java.util
+
+import backtype.storm.task.ShellBolt
 import backtype.storm.topology.base.BaseBasicBolt
-import backtype.storm.topology.{BasicOutputCollector, OutputFieldsDeclarer, TopologyBuilder}
+import backtype.storm.topology.{BasicOutputCollector, IRichBolt, OutputFieldsDeclarer, TopologyBuilder}
 import backtype.storm.tuple.{Fields, Tuple, Values}
 import backtype.storm.{Config, LocalCluster, StormSubmitter}
 import storm.kafka.{KafkaSpout, SpoutConfig, ZkHosts}
@@ -47,6 +50,14 @@ class Echo1Bolt extends BaseBasicBolt {
   }
 }
 
+class Echo2Bolt(val script: String) extends ShellBolt("python", script) with IRichBolt {
+  override def declareOutputFields(declarer: OutputFieldsDeclarer): Unit = {
+    declarer.declare(new Fields("output2"))
+  }
+
+  override def getComponentConfiguration: util.Map[String, AnyRef] = null
+}
+
 object DemoTopology {
   def main(args: Array[String]) {
     val zkHosts = new ZkHosts("127.0.0.1:2181") // zookeeper hosts
@@ -63,6 +74,7 @@ object DemoTopology {
     builder.setBolt("split", new SplitBolt, 1).shuffleGrouping("spout")
     builder.setBolt("echo-0", new Echo0Bolt, 1).fieldsGrouping("split", new Fields("word-0"))
     builder.setBolt("echo-1", new Echo1Bolt, 1).fieldsGrouping("split", new Fields("word-1"))
+    builder.setBolt("echo-2", new Echo2Bolt("echo.py")).fieldsGrouping("split", new Fields("word-0", "word-1"))
 
     val conf: Config = new Config
     conf.setDebug(false)

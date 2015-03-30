@@ -59,6 +59,12 @@
       </plugins>
     </pluginManagement>
 
+    <resources>
+      <resource>
+        <directory>src/main/multilang</directory>
+      </resource>
+    </resources>
+
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
