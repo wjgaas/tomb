@@ -66,7 +66,7 @@ object DemoTopology {
     val zkSpoutId = "client0" // unique spout id.
     val spoutConfig = new SpoutConfig(zkHosts, topicName, zkRoot, zkSpoutId);
     // see storm-kafka's README for more options.
-    spoutConfig.forceFromStart = true
+    // spoutConfig.forceFromStart = true
     val spout = new KafkaSpout(spoutConfig)
 
     val builder: TopologyBuilder = new TopologyBuilder

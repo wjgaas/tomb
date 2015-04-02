@@ -19,23 +19,23 @@ def read_train(n):
     ys = []
     for s in f:
         if s.startswith('label'): continue
+        if not n: break
         n -= 1
-        if not n: break        
         (x, y) = read_in(s)
         xs.append(np.array(x))
         ys.append(y)
-    return (np.array(xs), np.array(ys))
+    return (np.array(xs).astype(np.float32), np.array(ys).astype(np.float32))
 
 def read_test(n):
     f = open('test.csv')
     xs = []
-    for s in f:        
+    for s in f:
         if s.startswith('pixel'): continue
-        n -= 1
         if not n: break
+        n -= 1
         x = read_in(s, True)
         xs.append(np.array(x))
-    return np.array(xs)
+    return np.array(xs).astype(np.float32)
 
 def write_result(ys, fname):
     f = open(fname, 'w')
@@ -44,6 +44,13 @@ def write_result(ys, fname):
         y = ys[i]
         f.write('%d,%d\n' % (i+1, y))
     f.close()
+
+def find_max_idx(xs):
+    n = xs.shape[0]
+    mx = xs.max()
+    for i in range(0, n):
+        if xs[i] == mx: return i
+    assert(0)
 
 _ts = 0
 def start_timer():
