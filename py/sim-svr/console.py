@@ -7,7 +7,7 @@ from PIL import Image
 import traceback
 
 def main():
-    p = Process()
+    p = Process(debug = True)
     pb = PhoneBook('phone-book.db')
     while True:
         phone = pb.randomly_select_phone()

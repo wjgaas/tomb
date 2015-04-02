@@ -88,7 +88,7 @@ class HttpPool:
         headers = {}
         headers['Connection'] = 'keep-alive'
         headers['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
-        headers['User-Agent'] = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/38.0.2125.122 Safari/537.36'
+        headers['User-Agent'] = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/38.0.2125.122 Safari/537.56'
         # headers['Accept-Encoding'] = 'gzip,deflate'
         headers['Accept-Language'] = 'en-US,en;q=0.8,zh-CN;q=0.6'
         return headers
@@ -113,7 +113,9 @@ class Process:
     def __init__(self, debug = False):
         self.debug = debug
         self.st = Storage()
-        self.cp = HttpPool()
+        self.cp0 = HttpPool(debug = debug)
+        self.cp1 = HttpPool(debug = debug)
+        self.cp = None
 
     def captcha_filename(self, uid): return '%s' % uid
 
@@ -156,6 +158,7 @@ class Process:
         conn = cp.get_https(host)
         req = conn.request('POST', '/loginbox', body, headers)
         res = conn.getresponse()
+        if self.debug: print res.status
         if res.status != 200: conn.close(); return
         cm.update_from_string(res.getheader('set-cookie'))
         page = res.read()
@@ -266,6 +269,7 @@ class Process:
         return self.step8(cm, cp, headers, url)
 
     def above_half(self, phone, bypass = False):
+        self.cp = self.cp0 # 在第一阶段使用cp0 pool.
         bal = self.st.get_phone_balance(phone)
         if bal and not bypass: return (True, bal)
         cm = Session()
@@ -278,6 +282,7 @@ class Process:
         return (False, uid)
 
     def bottom_half(self, uid, code):
+        self.cp = self.cp1 # 在第二阶段使用cp1 pool.
         cm = Session()
         info = self.st.get_query_session(uid)
         if not info: return (False, 'invalid')
@@ -299,7 +304,7 @@ class Process:
         return (True, bal)
 
 def test():
-    p = Process(True)
+    p = Process(debug = True)
     phone = raw_input('input phone > ').strip()
     (ok, res) = p.above_half(phone)
     if ok:

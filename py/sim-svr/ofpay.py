@@ -24,16 +24,20 @@ kChargeOK = 1
 kChargeFailed = 2
 kChargeNoOrder = 3
 
+from mysql_wrapper import MySQLWrapper
+def creator_mysql_connection():
+    return MySQLdb.connect(host = '127.0.0.1', user = 'autocube', passwd = 'autocube@2014', db = 'autocube', port = 3306)
+
 class OFPayer:
     def __init__(self):
         self.pf = None
-        self.mh = MySQLdb.connect(host = '127.0.0.1', user = 'autocube', passwd = 'xxxxxx', db = 'autocube', port = 3306)
+        self.mh = MySQLWrapper(creator_mysql_connection)
         self.rh = redis.StrictRedis(host = '127.0.0.1', port = 6379, db = 1)
         self.auto_id = 0
         self.pid = os.getpid()
         self.user_id = 'Axxxxx'
         m = hashlib.md5()
-        m.update('xxxxx')
+        m.update('<password>')
         self.user_pws = m.hexdigest()
         self.card_id = '140101' # 快充编号
         self.card_nums = [1,2,5,10,20,30,50,100,300] # 快充金额
@@ -79,7 +83,7 @@ class OFPayer:
         m = hashlib.md5()
         m.update(body)
         self.md5_str = m.hexdigest().upper()
-        self.callback_url = urllib.quote('http://<your-host>/sim-svr/charge-cb')
+        self.callback_url = urllib.quote('http://<host>/sim-svr/charge-cb')
         url = 'http://api2.ofpay.com/onlineorder.do?userid=%(user_id)s&userpws=%(user_pws)s&cardid=%(card_id)s&cardnum=%(card_num)s&sporder_id=%(sporder_id)s&sporder_time=%(sporder_time)s&game_userid=%(phone_no)s&md5_str=%(md5_str)s&ret_url=%(callback_url)s&version=6.0' % self.__dict__
         self.charge_url = url
         return True
@@ -105,10 +109,7 @@ class OFPayer:
             ordercash = 0.0
             st = kChargeUnknown
             ps = "INSERT IGNORE INTO phone_charge_history VALUES('%s', '%s', %s, '%s', '%s', %s, %s)" % (self.sporder_id, self.sporder_time2, self.card_num, self.phone_no, orderid, ordercash, st)
-            cur = self.mh.cursor()
-            cur.execute(ps)
-            self.mh.commit()
-            cur.close()
+            self.mh.execute(ps, commit = True)
         except Exception as e:
             traceback.print_exc()
             # 如果数据库操作失败的话那么不会请求后端
@@ -128,10 +129,7 @@ class OFPayer:
         orderid = kv['orderid']
         ordercash = kv['ordercash']
         ps = "UPDATE phone_charge_history SET orderid = '%s', ordercash = '%s', orderst = %s WHERE spid = '%s'" % (orderid, ordercash, st, self.sporder_id)
-        cur = self.mh.cursor()
-        cur.execute(ps)
-        self.mh.commit()
-        cur.close()
+        self.mh.execute(ps, commit = True)
         if st == 0: return (0, 'charging')
         else: return (1, 'done')
 
@@ -147,10 +145,7 @@ class OFPayer:
         if st == -1: st = kChargeNoOrder
         elif st == 9: st = kChargeFailed
         ps = "UPDATE phone_charge_history SET orderst = %s WHERE spid = '%s'" % (st, sporder_id)
-        cur = self.mh.cursor()
-        cur.execute(ps)
-        self.mh.commit()
-        cur.close()
+        self.mh.execute(ps, commit = True)
         # 状态是否稳定
         if st == 0: return False
         return True
@@ -164,8 +159,7 @@ class OFPayer:
         # 查询最近3次是否有正在充值的记录，如果有的话立刻更新状态
         # 通常来说是用户希望查询自己充值是否成功
         ps = "SELECT spid FROM phone_charge_history WHERE phone_no = '%s' AND orderst = 0 ORDER BY sptime DESC LIMIT 3" % (phone_no)
-        cur = self.mh.cursor()
-        cur.execute(ps)
+        cur = self.mh.execute(ps)
         rs = cur.fetchall()
         cur.close()
         if not rs: rs = []
@@ -178,8 +172,7 @@ class OFPayer:
         # 只查询 充值完成 和 正在充值
         ps = "SELECT sptime, orderid, orderst FROM phone_charge_history WHERE phone_no = '%s' AND DATEDIFF(sptime, NOW()) <= %s AND (orderst = 0 OR orderst = 1) ORDER BY sptime DESC LIMIT %s" % (phone_no, period, limit)
         res = []
-        cur = self.mh.cursor()
-        cur.execute(ps)
+        cur = self.mh.execute(ps)
         rs = cur.fetchall()
         if not rs: rs = []
         for r in rs:
@@ -193,8 +186,7 @@ class OFPayer:
 
     def complete_history(self):
         ps = "SELECT spid FROM phone_charge_history WHERE orderst = 0 ORDER BY sptime;"
-        cur = self.mh.cursor()
-        cur.execute(ps)
+        cur = self.mh.execute(ps)
         while True:
             rs = cur.fetchmany(100)
             if not rs: cur.close(); break
@@ -206,13 +198,15 @@ class OFPayer:
 
 def test():
     p = OFPayer()
-    uid = 'test00005'
+    uid = 'test00014'
     phone = '13484095106'
+
     # # 充值
     # ts = p.current_time()
     # p.pre_charge(uid, ts, 2, phone)
     # kv = p.do_charge()
     # print p.post_charge(kv)
+
     # 查询充值记录
     print p.query_charge_history(phone)
 

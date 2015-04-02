@@ -42,8 +42,26 @@ layer {
   type: "MemoryData"
   top: "data"
   top: "label"
+  include {
+    phase: TRAIN
+  }
   memory_data_param {
-    batch_size: 420
+    batch_size: 4200
+    channels: 1
+    height: 28
+    width: 28
+  }
+}
+layer {
+  name: "mnist"
+  type: "MemoryData"
+  top: "data"
+  top: "label"
+  include {
+     phase: TEST
+  }
+  memory_data_param {
+    batch_size: 4200
     channels: 1
     height: 28
     width: 28

@@ -7,8 +7,10 @@ import os
 import traceback
 import urlparse
 
-p = Process()
+p = Process(debug = True)
 pb = PhoneBook('phone-book.db')
+
+root = '/'
 
 def process(env, start_response):
     global p, pb
@@ -17,8 +19,8 @@ def process(env, start_response):
     qs = env['QUERY_STRING']
 
     # 跳转回主页
-    home_ok = """<html><head><meta http-equiv="content-type" content="text/html;charset=utf-8"><meta http-equiv="refresh" content="2; url=/"/></head><body><p>更新成功，2秒后跳回主页面</p></html>"""
-    home_f1 = """<html><head><meta http-equiv="content-type" content="text/html;charset=utf-8"><meta http-equiv="refresh" content="2; url=/"/></head><body><p>更新失败，2秒后跳回主页面</p></body></html>"""
+    home_ok = """<html><head><meta http-equiv="content-type" content="text/html;charset=utf-8"><meta http-equiv="refresh" content="2; url=%s"/></head><body><p>更新成功，2秒后跳回主页面</p></html>""" % (root)
+    home_f1 = """<html><head><meta http-equiv="content-type" content="text/html;charset=utf-8"><meta http-equiv="refresh" content="2; url=%s"/></head><body><p>更新失败，2秒后跳回主页面</p></body></html>""" % (root)
     home_f2 = """<html><head><meta http-equiv="content-type" content="text/html;charset=utf-8"></head><body><p>出现如下异常</p><pre>%s</pre></body></html>"""
 
     if path == '/':
@@ -32,9 +34,10 @@ def process(env, start_response):
             start_response('200 OK', [('Content-Type','text/html')])
             vcode = './static/%s.jpg' % (p.captcha_filename(uid))
             kvs = {'vcode': vcode, 'uid': uid, 'phone': phone}
+            kvs['root'] = root
             html ="""
 <html><body><img src="%(vcode)s"/>
-<form action="/cont" method="GET">
+<form action="%(root)scont" method="GET">
 <p>Code: <input type="text" name="code" autofocus/></p>
 <input type="hidden" name="phone" value="%(phone)s"/>
 <input type="hidden" name="uid" value="%(uid)s"/>
@@ -53,7 +56,7 @@ def process(env, start_response):
         uid = d['uid'][0]
         try:
             (ok, res) = p.bottom_half(uid, code)
-            if not ok:
+            if ok:
                 balance = res
                 pb.update_phone_balance(phone, balance)
                 print "更新号码 '%s' = %s 成功" % (phone, balance)

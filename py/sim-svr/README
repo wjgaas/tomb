@@ -35,6 +35,7 @@ b. {'code': 0, 'msg': 'bal', 'data': res[1]} 表示查询成功，余额在'data
 测试在线程序可以使用./svr.py直接运行，作为产品部署的话最好使用WSGI容器如gunicorn.
 1. gunicorn -w 64 svr:app # 如果添加参数使用-k event来启动的话效果会更好 :)
 2. 访问localhost:8000
+3. note(dirlt): 因为最后面有读取接近14K的页面，如果使用默认超时时间会出现gevent timedout情况。可以适当调大--keepalive(5)参数.
 
 -----
 
