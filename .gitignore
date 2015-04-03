@@ -31,3 +31,4 @@ kaggle/*/submission.csv
 kaggle/digit-recognizer/*.csv
 *.caffemodel
 *.solverstate
+*.hdf5

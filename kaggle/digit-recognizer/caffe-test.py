@@ -8,13 +8,16 @@ sys.path.append(os.path.join(os.environ['HOME'], 'repo/caffe/python'))
 import caffe
 
 caffe.set_mode_cpu()
-clf = caffe.Classifier('caffe-conf/test.prototxt',
-                       'uv_iter_5000.caffemodel')
+net = caffe.Net('caffe-conf/test.prototxt',
+                'uv_iter_10000.caffemodel',
+                caffe.TEST)
 
 from common import *
 data = read_test(-1)
-# classifier要求数据数据是H * W * K
-data = data.reshape((-1, 28, 28, 1)) * 1.0 / 256
-rs = clf.predict(data)
+start_timer()
+data = data.reshape((-1, 1, 28, 28))
+out = net.forward_all(**{'data': data})
+rs = out['prob']
+print_timer("predict")
 ys = map(lambda x: find_max_idx(x), rs)
 write_result(ys, 'caffe.csv')

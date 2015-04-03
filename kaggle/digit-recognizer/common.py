@@ -24,7 +24,7 @@ def read_train(n):
         (x, y) = read_in(s)
         xs.append(np.array(x))
         ys.append(y)
-    return (np.array(xs).astype(np.float32), np.array(ys).astype(np.float32))
+    return (np.array(xs).astype(np.float32) * 1.0 / 256, np.array(ys).astype(np.float32))
 
 def read_test(n):
     f = open('test.csv')
@@ -35,7 +35,7 @@ def read_test(n):
         n -= 1
         x = read_in(s, True)
         xs.append(np.array(x))
-    return np.array(xs).astype(np.float32)
+    return np.array(xs).astype(np.float32) * 1.0 / 256
 
 def write_result(ys, fname):
     f = open(fname, 'w')

@@ -30,7 +30,7 @@ name: "LeNet"
 #   }
 #   hdf5_data_param {
 #     # 文件里面包含HDF5文件名称列表
-#     # 具体转换程序参考caffe-cvt.py脚本
+#     # 可以参考caffe-prepare.py
 #     source: "train.list"
 #     batch_size: 420
 #     shuffle: true
@@ -46,7 +46,7 @@ layer {
     phase: TRAIN
   }
   memory_data_param {
-    batch_size: 4200
+    batch_size: 42
     channels: 1
     height: 28
     width: 28
@@ -61,7 +61,7 @@ layer {
      phase: TEST
   }
   memory_data_param {
-    batch_size: 4200
+    batch_size: 42
     channels: 1
     height: 28
     width: 28
@@ -79,7 +79,7 @@ layer {
     lr_mult: 2
   }
   convolution_param {
-    num_output: 20
+    num_output: 32
     kernel_size: 5
     stride: 1
     weight_filler {
@@ -98,7 +98,7 @@ layer {
   pooling_param {
     pool: MAX
     kernel_size: 2
-    stride: 2
+    stride: 1
   }
 }
 layer {
@@ -113,8 +113,8 @@ layer {
     lr_mult: 2
   }
   convolution_param {
-    num_output: 50
-    kernel_size: 5
+    num_output: 64
+    kernel_size: 3
     stride: 1
     weight_filler {
       type: "xavier"
@@ -132,7 +132,16 @@ layer {
   pooling_param {
     pool: MAX
     kernel_size: 2
-    stride: 2
+    stride: 1
+  }
+}
+layer {
+  name: "drop1"
+  type: "Dropout"
+  bottom: "pool2"
+  top: "pool2"
+  dropout_param {
+    dropout_ratio: 0.5
   }
 }
 layer {
@@ -162,15 +171,6 @@ layer {
   bottom: "ip1"
   top: "ip1"
 }
-# layer {
-#   name: "drop1"
-#   type: "Dropout"
-#   bottom: "ip1"
-#   top: "ip1"
-#   dropout_param {
-#     dropout_ratio: 0.5
-#   }
-# }
 layer {
   name: "ip2"
   type: "InnerProduct"

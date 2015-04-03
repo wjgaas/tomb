@@ -7,19 +7,38 @@ import os
 sys.path.append(os.path.join(os.environ['HOME'], 'repo/caffe/python'))
 import caffe
 import numpy as np
+from sklearn.utils import shuffle
 from sklearn.cross_validation import train_test_split
 from common import *
+import h5py
 
-# no = 42000.
-(data, labels) = read_train(-1)
-data = data.reshape((-1, 1, 28, 28)) * 0.00390625
-labels = labels.reshape((-1, 1, 1, 1))
+f = h5py.File('train.hdf5')
+data = f['data']
+labels = f['label']
 
-# train size = 42000 * 0.9
-# test size = 42000 * 0.1
-(tr_x, tt_x, tr_y, tt_y) = train_test_split(data, labels, test_size = 0.1, random_state = 0)
+# import pylab as pl
+# pl.imshow(data[16].reshape((28, 28)))
+# pl.show()
+
 solver = caffe.get_solver('caffe-conf/solver.prototxt')
-# solver.restore('uv_iter_5000.solverstate')
+solver.restore('uv_iter_2000.solverstate')
+
+start_timer()
+tr_x, tt_x, tr_y, tt_y = train_test_split(data, labels, test_size = 0.1, random_state = 40)
+print_timer('split')
+
+# # # augment data by providing different mini-batch dataset.
+# # start_timer()
+# # nx = tr_x
+# # ny = tr_y
+# # for i in range(0, 10):
+# #     (x, y) = shuffle(tr_x, tr_y, random_state = i + 100)
+# #     nx = np.append(nx, x, axis = 0)
+# #     ny = np.append(ny, y, axis = 0)
+# # print_timer("augment")
+
+start_timer()
 solver.net.set_input_arrays(tr_x, tr_y)
 solver.test_nets[0].set_input_arrays(tt_x, tt_y)
 solver.solve()
+print_timer("solve")
