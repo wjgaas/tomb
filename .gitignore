@@ -32,3 +32,5 @@ kaggle/digit-recognizer/*.csv
 *.caffemodel
 *.solverstate
 *.hdf5
+*.jpg
+*.png
