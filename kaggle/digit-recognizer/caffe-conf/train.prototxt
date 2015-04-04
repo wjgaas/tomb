@@ -12,7 +12,7 @@ name: "LeNet"
 # # 所以这个应该比较适合彩色图片
 #   image_data_param {
 #     source: "train.list"
-#     batch_size: 420
+#     batch_size: 42
 #     shuffle: true
 #   }
 #   transform_param {
@@ -32,7 +32,7 @@ name: "LeNet"
 #     # 文件里面包含HDF5文件名称列表
 #     # 可以参考caffe-prepare.py
 #     source: "train.list"
-#     batch_size: 420
+#     batch_size: 42
 #     shuffle: true
 #   }
 # }
@@ -102,9 +102,24 @@ layer {
   }
 }
 layer {
+  name: "relu1"
+  type: "TanH"
+  bottom: "pool1"
+  top: "relu1"
+}
+layer {
+  name: "drop1"
+  type: "Dropout"
+  bottom: "relu1"
+  top: "drop1"
+  dropout_param {
+    dropout_ratio: 0.5
+  }
+}
+layer {
   name: "conv2"
   type: "Convolution"
-  bottom: "pool1"
+  bottom: "drop1"
   top: "conv2"
   param {
     lr_mult: 1
@@ -136,9 +151,24 @@ layer {
   }
 }
 layer {
+  name: "relu2"
+  type: "TanH"
+  bottom: "pool2"
+  top: "relu2"
+}
+layer {
+  name: "drop2"
+  type: "Dropout"
+  bottom: "relu2"
+  top: "drop2"
+  dropout_param {
+    dropout_ratio: 0.5
+  }
+}
+layer {
   name: "ip1"
   type: "InnerProduct"
-  bottom: "pool2"
+  bottom: "drop2"
   top: "ip1"
   param {
     lr_mult: 1
@@ -157,18 +187,18 @@ layer {
   }
 }
 layer {
-  name: "relu1"
+  name: "relu3"
   type: "ReLU"
   bottom: "ip1"
-  top: "relu1"
+  top: "relu3"
 }
 layer {
   name: "drop3"
   type: "Dropout"
-  bottom: "relu1"
+  bottom: "relu3"
   top: "drop3"
   dropout_param {
-    dropout_ratio: 0.25
+    dropout_ratio: 0.5
   }
 }
 layer {

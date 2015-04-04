@@ -14,12 +14,12 @@ from google.protobuf import text_format
 print 'train...'
 net = caffe_pb2.NetParameter()
 text_format.Merge(open('caffe-conf/train.prototxt').read(), net)
-caffe.draw.draw_net_to_file(net, 'caffe-train.png', 'TB')
+caffe.draw.draw_net_to_file(net, 'caffe-train.png', 'LR')
 
 print 'test...'
 net = caffe_pb2.NetParameter()
 text_format.Merge(open('caffe-conf/test.prototxt').read(), net)
-caffe.draw.draw_net_to_file(net, 'caffe-test.png', 'TB')
+caffe.draw.draw_net_to_file(net, 'caffe-test.png', 'LR')
 
 caffe.set_mode_cpu()
 net = caffe.Net('caffe-conf/test.prototxt',
@@ -32,7 +32,8 @@ start_timer()
 data = data.reshape((-1, 1, 28, 28))
 out = net.forward_all(**{'data': data})
 blobs = net._blobs
-for name in net._layer_names: print name
+idx = 1
+for name in net._layer_names: print 'layer#%d = %s' %(idx, name); idx += 1
 
 import pylab as plt
 import matplotlib.cm as cm
@@ -59,9 +60,9 @@ data = blobs[2].data[nth] # pool1
 simple_plot(data, 4, 8, 'caffe-pool1.png')
 
 print 'conv2...'
-data = blobs[3].data[nth] # conv2
+data = blobs[5].data[nth] # conv2
 simple_plot(data, 8, 8, 'caffe-conv2.png')
 
 print 'pool2...'
-data = blobs[4].data[nth] # pool2
+data = blobs[6].data[nth] # pool2
 simple_plot(data, 8, 8, 'caffe-pool2.png')

@@ -9,7 +9,7 @@ import caffe
 
 caffe.set_mode_cpu()
 net = caffe.Net('caffe-conf/test.prototxt',
-                'uv_iter_9500.caffemodel',
+                'uv_iter_16500.caffemodel',
                 caffe.TEST)
 
 from common import *
