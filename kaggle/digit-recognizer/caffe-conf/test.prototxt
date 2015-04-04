@@ -36,7 +36,7 @@ layer {
   pooling_param {
     pool: MAX
     kernel_size: 2
-    stride: 1
+    stride: 2
   }
 }
 layer {
@@ -52,7 +52,7 @@ layer {
   }
   convolution_param {
     num_output: 64
-    kernel_size: 3
+    kernel_size: 5
     stride: 1
     weight_filler {
       type: "xavier"
@@ -70,22 +70,13 @@ layer {
   pooling_param {
     pool: MAX
     kernel_size: 2
-    stride: 1
-  }
-}
-layer {
-  name: "drop1"
-  type: "Dropout"
-  bottom: "pool2"
-  top: "drop1"
-  dropout_param {
-    dropout_ratio: 0.5
+    stride: 2
   }
 }
 layer {
   name: "ip1"
   type: "InnerProduct"
-  bottom: "drop1"
+  bottom: "pool2"
   top: "ip1"
   param {
     lr_mult: 1
@@ -110,9 +101,18 @@ layer {
   top: "relu1"
 }
 layer {
+  name: "drop3"
+  type: "Dropout"
+  bottom: "relu1"
+  top: "drop3"
+  dropout_param {
+    dropout_ratio: 0.25
+  }
+}
+layer {
   name: "ip2"
   type: "InnerProduct"
-  bottom: "relu1"
+  bottom: "drop3"
   top: "ip2"
   param {
     lr_mult: 1

@@ -16,26 +16,12 @@ f = h5py.File('train.hdf5')
 data = f['data']
 labels = f['label']
 
-# import pylab as pl
-# pl.imshow(data[16].reshape((28, 28)))
-# pl.show()
-
 solver = caffe.get_solver('caffe-conf/solver.prototxt')
-solver.restore('uv_iter_2000.solverstate')
+# solver.restore('uv_iter_5000.solverstate')
 
 start_timer()
 tr_x, tt_x, tr_y, tt_y = train_test_split(data, labels, test_size = 0.1, random_state = 40)
 print_timer('split')
-
-# # # augment data by providing different mini-batch dataset.
-# # start_timer()
-# # nx = tr_x
-# # ny = tr_y
-# # for i in range(0, 10):
-# #     (x, y) = shuffle(tr_x, tr_y, random_state = i + 100)
-# #     nx = np.append(nx, x, axis = 0)
-# #     ny = np.append(ny, y, axis = 0)
-# # print_timer("augment")
 
 start_timer()
 solver.net.set_input_arrays(tr_x, tr_y)
