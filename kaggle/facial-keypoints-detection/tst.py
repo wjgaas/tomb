@@ -16,7 +16,7 @@ def print_timer(msg):
     _now = time.time()
     print('%s: %.2f seconds' % (msg, _now - GlobalTimeStamp))
     GlobalTimeStamp = _now
-    
+
 def read_train():
     start_timer()
     df = pd.read_csv('training.csv')
@@ -121,7 +121,10 @@ def create_net1():
         # three layers: one hidden layer
         layers=[
         ('input', layers.InputLayer),
-        ('hidden', layers.DenseLayer),
+        ('h1', layers.DenseLayer),
+        ('d1', layers.DropoutLayer),
+        ('h2', layers.DenseLayer),
+        ('d2', layers.DropoutLayer),
         ('output', layers.DenseLayer),
         ],
 
@@ -129,19 +132,27 @@ def create_net1():
 
         # variable batch size.
         input_shape=(None, 9216),  # 96x96 input pixels per batch
-        hidden_num_units=100,  # number of units in hidden layer
-        hidden_nonlinearity=rectify,
+        h1_num_units = 100,  # number of units in hidden layer
+        h1_nonlinearity = rectify,
+        d1_p = 0.5,
+        h2_num_units = 100,
+        h2_nonlinearity = rectify,
+        d2_p = 0.5,
         output_nonlinearity=tanh,  # output layer uses identity function
         output_num_units=30,  # 30 target values
 
         # optimization method:
         update=nesterov_momentum,
-        update_learning_rate=0.02,
+        update_learning_rate=0.01,
         update_momentum=0.9,
 
-        regression=True,  # flag to indicate we're dealing with regression problem
-        max_epochs=400,  # we want to train this many epochs
+        regression = True,  # flag to indicate we're dealing with regression problem
+        max_epochs = 200,  # we want to train this many epochs
+        eval_size = 0.1,
         verbose=1,
+        on_epoch_finished = [ # could have multiple callbacks.
+                EpochFinishedCallback(0.01, 0.005),
+        ],
     )
     return net1
 
@@ -228,15 +239,15 @@ def create_net3():
 
         # optimization method:
         update=nesterov_momentum,
-        update_learning_rate=Tshared(float32(0.03)),
+        update_learning_rate=Tshared(float32(0.02)),
         update_momentum=Tshared(float32(0.9)),
 
-        regression=True,  # flag to indicate we're dealing with regression problem
-        max_epochs=400,  # we want to train this many epochs
+        regression = True,  # flag to indicate we're dealing with regression problem
+        max_epochs = 400,  # we want to train this many epochs
         eval_size = 0.1,
         batch_iterator_train = FlipBatchIterator(batch_size = 128),
         on_epoch_finished = [ # could have multiple callbacks.
-                EpochFinishedCallback(0.03, 0.005),
+                EpochFinishedCallback(0.02, 0.005),
             ],
         verbose=1,
     )
