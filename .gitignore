@@ -34,3 +34,6 @@ kaggle/digit-recognizer/*.csv
 *.hdf5
 *.jpg
 *.png
+*.zip
+kaggle/facial-keypoints-detection/*.csv
+
