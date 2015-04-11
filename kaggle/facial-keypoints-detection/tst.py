@@ -79,7 +79,7 @@ def flip_op(X, y = None, indices = None):
             y[:,(a,b)] = y[:,(b,a)]
     return (X, y)
 
-def plot_flip_samples(X, y):
+def plot_flip(X, y):
     X0, y0 = flip_op(X, y)
     xs = []
     ys = []
@@ -89,6 +89,13 @@ def plot_flip_samples(X, y):
         ys.append(y[idx])
         ys.append(y0[idx])
     plot_samples(np.array(xs), ys)
+
+def flip_augment(X, y):
+    X0, y0 = flip_op(X, y)
+    X0 = X0.reshape((-1, 96 * 96))
+    nX = np.append(X, X0, axis = 0)
+    ny = np.append(y, y0, axis = 0)
+    return nX, ny
 
 def write_test(ty):
     names = "left_eye_center, right_eye_center, left_eye_inner_corner, left_eye_outer_corner, right_eye_inner_corner, right_eye_outer_corner, left_eyebrow_inner_end, left_eyebrow_outer_end, right_eyebrow_inner_end, right_eyebrow_outer_end, nose_tip, mouth_left_corner, mouth_right_corner, mouth_center_top_lip, mouth_center_bottom_lip".split(', ')
@@ -116,15 +123,17 @@ from lasagne.nonlinearities import rectify, tanh, softmax, sigmoid
 
 # https://github.com/dnouri/nolearn/blob/master/nolearn/lasagne.py
 # nolearn has wrapper of lasagne.
+
+# !flip，validation loss = 0.002164, LB score = 3.70266
+# +flip, validation loss = 0.001817, LB score = ???
+
 def create_net1():
     net1 = NeuralNet(
         # three layers: one hidden layer
         layers=[
         ('input', layers.InputLayer),
         ('h1', layers.DenseLayer),
-        ('d1', layers.DropoutLayer),
         ('h2', layers.DenseLayer),
-        ('d2', layers.DropoutLayer),
         ('output', layers.DenseLayer),
         ],
 
@@ -132,27 +141,28 @@ def create_net1():
 
         # variable batch size.
         input_shape=(None, 9216),  # 96x96 input pixels per batch
-        h1_num_units = 100,  # number of units in hidden layer
-        h1_nonlinearity = rectify,
-        d1_p = 0.5,
+        h1_num_units = 400,  # number of units in hidden layer
+        # 直觉上9000输入有点多，使用rectify会造成输出值幅度很大
+        # 所以用tanh可以限制一下这个幅度。不过好像差别也没有那么大
+        h1_nonlinearity = tanh,
+        # h1_nonlinearity = rectify,
+
         h2_num_units = 100,
         h2_nonlinearity = rectify,
-        d2_p = 0.5,
-        output_nonlinearity=tanh,  # output layer uses identity function
+
+        output_nonlinearity=tanh,
+        # None if output layer wants to use identity function
         output_num_units=30,  # 30 target values
 
         # optimization method:
         update=nesterov_momentum,
-        update_learning_rate=0.01,
+        update_learning_rate=0.02,
         update_momentum=0.9,
 
         regression = True,  # flag to indicate we're dealing with regression problem
-        max_epochs = 200,  # we want to train this many epochs
+        max_epochs = 1000,  # we want to train this many epochs
         eval_size = 0.1,
-        verbose=1,
-        on_epoch_finished = [ # could have multiple callbacks.
-                EpochFinishedCallback(0.01, 0.005),
-        ],
+        verbose=1
     )
     return net1
 
@@ -167,6 +177,9 @@ else:
 
 # streaming方式输入
 class FlipBatchIterator(BatchIterator):
+    def __init__(self, batch_size):
+        BatchIterator.__init__(self, batch_size)
+
     def transform(self, X, y):
         sz = X.shape[0]
         indices = np.random.choice(sz, sz / 2, replace = False)
@@ -181,6 +194,7 @@ def Tshared(k): return theano.shared(k)
 
 # 每次完成迭代进行权重调整. 可以让初始权重大一些，但是到后面逐渐变小
 # 这样到训练后期loss可以变得更加平滑，而不是一直地震荡，这样我们可以提早结束训练
+# note(dirlt): 不过感觉效果不是特别显著，因为训练后期weight-delta也在不断变小.
 class EpochFinishedCallback:
     def __init__(self, lr_start, lr_stop):
         self.lr_start = lr_start
@@ -189,17 +203,17 @@ class EpochFinishedCallback:
 
     def __call__(self, nn, tr_hist):
         if self.lr_values is None:
-            self.lr_values = np.linspace(self.lr_start, self.lr_stop, nn.max_epochs)
+            self.lr_values = np.linspace(self.lr_start, self.lr_stop, nn.max_epochs) # 线性插值
         current_epoch = tr_hist[-1]['epoch']
         lr_value = float32(self.lr_values[current_epoch - 1])
         nn.update_learning_rate = lr_value
 
 # 不要一上来就开始加dropout. 这样会降低训练速度。只有确定出现overfitting情况的时候再开始添加
 # training和validation error差别很大的时候，可以认为出现overfitting. 首先想到的是应该增加数据，然后考虑regularization(weight-decay or dropout).
-# 如果overfitting不在出现之后，然后再考虑增加模型复杂度来增加精确度，之后肯定又会出现overfitting, 然后这样不断地迭代改进
+# 直到overfitting现象消失，然后再考虑增加模型复杂度来增加精确度，之后继续出现overfitting，这样不断迭代改进。
 
-def create_net3():
-    net3 = NeuralNet(
+def create_net2():
+    net2 = NeuralNet(
         # three layers: one hidden layer
         layers=[
         ('input', layers.InputLayer),
@@ -245,13 +259,13 @@ def create_net3():
         regression = True,  # flag to indicate we're dealing with regression problem
         max_epochs = 400,  # we want to train this many epochs
         eval_size = 0.1,
-        batch_iterator_train = FlipBatchIterator(batch_size = 128),
-        on_epoch_finished = [ # could have multiple callbacks.
-                EpochFinishedCallback(0.02, 0.005),
-            ],
+        # batch_iterator_train = FlipBatchIterator(batch_size = 128),
+        # on_epoch_finished = [ # could have multiple callbacks.
+        #         EpochFinishedCallback(0.02, 0.005),
+        #     ],
         verbose=1,
     )
-    return net3
+    return net2
 
 def plot_loss(net1):
     import matplotlib.pyplot as pyplot
