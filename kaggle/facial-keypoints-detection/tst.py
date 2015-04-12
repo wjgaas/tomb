@@ -70,6 +70,7 @@ def flip_op(X, y = None, indices = None):
         (12, 16), (13, 17), (14, 18), (15, 19),
         (22, 24), (23, 25),
     ]
+    # no copy at all!
     X = X.reshape((-1, 1, 96, 96))
     X = X[:,:,:,::-1]
     if y is not None:
@@ -90,9 +91,9 @@ def plot_flip(X, y):
         ys.append(y0[idx])
     plot_samples(np.array(xs), ys)
 
-def flip_augment(X, y):
+def flip_augment(X, y, cnn = False):
+    X = X.reshape((-1, 1, 96, 96))
     X0, y0 = flip_op(X, y)
-    X0 = X0.reshape((-1, 96 * 96))
     nX = np.append(X, X0, axis = 0)
     ny = np.append(y, y0, axis = 0)
     return nX, ny
@@ -125,7 +126,18 @@ from lasagne.nonlinearities import rectify, tanh, softmax, sigmoid
 # nolearn has wrapper of lasagne.
 
 # !flip，validation loss = 0.002164, LB score = 3.70266
-# +flip, validation loss = 0.001817, LB score = ???
+# +flip, validation loss = 0.001817, LB score = 3.59038
+
+# 这种方式虽然灵活，但是却没有直接扩展数据集合的效果好
+# ～1000 epochs, validation loss = 0.001922, 并且期间出现过许多震荡
+class ANNFlipBatchIterator(BatchIterator):
+    def __init__(self, batch_size = 128):
+        BatchIterator.__init__(self, batch_size)
+
+    def transform(self, X, y):
+        X0, y0 = flip_augment(X, y)
+        X0 = X0.reshape((-1, 96 * 96))
+        return X0, y0
 
 def create_net1():
     net1 = NeuralNet(
@@ -162,6 +174,7 @@ def create_net1():
         regression = True,  # flag to indicate we're dealing with regression problem
         max_epochs = 1000,  # we want to train this many epochs
         eval_size = 0.1,
+        batch_iterator_train = ANNFlipBatchIterator(),
         verbose=1
     )
     return net1
@@ -175,17 +188,17 @@ else:
     Conv2DLayer = layers.Conv2DLayer
     MaxPool2DLayer = layers.MaxPool2DLayer
 
-# streaming方式输入
-class FlipBatchIterator(BatchIterator):
-    def __init__(self, batch_size):
+class CNNFlipBatchIterator(BatchIterator):
+    def __init__(self, batch_size = 128):
         BatchIterator.__init__(self, batch_size)
 
     def transform(self, X, y):
-        sz = X.shape[0]
-        indices = np.random.choice(sz, sz / 2, replace = False)
-        X = X[indices]
-        if y is not None: y = y[indices]
-        X0, y0 = flip_op(X, y)
+        # sz = X.shape[0]
+        # indices = np.random.choice(sz, sz / 2, replace = False)
+        # X = X[indices]
+        # y = y[indices]
+        # X0, y0 = flip_op(X, y)
+        X0, y0 = flip_augment(X, y)
         return X0, y0
 
 import theano
@@ -259,7 +272,7 @@ def create_net2():
         regression = True,  # flag to indicate we're dealing with regression problem
         max_epochs = 400,  # we want to train this many epochs
         eval_size = 0.1,
-        # batch_iterator_train = FlipBatchIterator(batch_size = 128),
+        # batch_iterator_train = CNNFlipBatchIterator(batch_size = 128),
         # on_epoch_finished = [ # could have multiple callbacks.
         #         EpochFinishedCallback(0.02, 0.005),
         #     ],

@@ -6,7 +6,7 @@ from common import *
 import h5py
 from skimage.transform import rotate
 
-if True:
+def data_augmentation():
     start_timer()
     (data, labels) = read_train(-1)
     print_timer("read train")
@@ -16,9 +16,9 @@ if True:
     ll = f.create_dataset('label', (max_n, 1, 1, 1), compression = 'lzf', dtype = np.float32)
 
     labels = labels.reshape((-1, 1, 1, 1))
-    
+
     # augment data by rotating.
-    start_timer()    
+    start_timer()
     idx = 0
     ds[idx:idx + data.shape[0]] = data.reshape((-1, 1, 28, 28))
     ll[idx:idx + data.shape[0]] = labels
@@ -36,3 +36,6 @@ if True:
         assert(d.shape[0] == data.shape[0])
         idx += d.shape[0]
     f.close()
+
+if __name__ == '__main__':
+    data_augmentation()
