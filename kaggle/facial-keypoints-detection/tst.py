@@ -188,16 +188,44 @@ else:
     Conv2DLayer = layers.Conv2DLayer
     MaxPool2DLayer = layers.MaxPool2DLayer
 
-class CNNFlipBatchIterator(BatchIterator):
-    def __init__(self, batch_size = 128):
+class MiniBatchIterator(BatchIterator):
+    def __init__(self, batch_size = 128, iterations = 32):
         BatchIterator.__init__(self, batch_size)
+        self.iterations = iterations
+        self.X = None
+        self.y = None
+        self.cidx = 0
+        self.midx = 0
+
+    def __call__(self, X, y = None):
+        # reset data set.
+        if not (self.X is X and self.y is y):
+            self.cidx = 0
+            n_samples = X.shape[0]
+            bs = self.batch_size
+            self.midx = (n_samples + bs - 1) // bs
+        self.X, self.y = X, y
+        return self
+
+    def __iter__(self):
+        bs = self.batch_size
+        for i in range(0, self.iterations):
+            sl = slice(self.cidx * bs , (self.cidx + 1) * bs)
+            self.cidx += 1
+            # wrap up.
+            if self.cidx >= self.midx: self.cidx = 0
+            Xb = self.X[sl]
+            if self.y is not None:
+                yb = self.y[sl]
+            else:
+                yb = None
+            yield self.transform(Xb, yb)
+
+class CNNFlipBatchIterator(MiniBatchIterator):
+    def __init__(self, batch_size = 128, iterations = 32):
+        MiniBatchIterator.__init__(self, batch_size, iterations)
 
     def transform(self, X, y):
-        # sz = X.shape[0]
-        # indices = np.random.choice(sz, sz / 2, replace = False)
-        # X = X[indices]
-        # y = y[indices]
-        # X0, y0 = flip_op(X, y)
         X0, y0 = flip_augment(X, y)
         return X0, y0
 
@@ -233,14 +261,14 @@ def create_net2():
 
         ('conv1', Conv2DLayer),
         ('pool1', MaxPool2DLayer),
-        # ('dropout1', layers.DropoutLayer),
+        ('dropout1', layers.DropoutLayer),
 
         ('conv2', Conv2DLayer),
         ('pool2', MaxPool2DLayer),
-        # ('dropout2', layers.DropoutLayer),
+        ('dropout2', layers.DropoutLayer),
 
         ('hidden3', layers.DenseLayer),
-        # ('dropout3', layers.DropoutLayer),
+        ('dropout3', layers.DropoutLayer),
 
         ('output', layers.DenseLayer),
         ],
@@ -250,15 +278,15 @@ def create_net2():
         # variable batch size.
         input_shape=(None, 1, 96, 96),  # 96x96 input pixels per batch
 
-        conv1_num_filters = 32, conv1_filter_size = (5, 5), pool1_ds = (2, 2),
-        # dropout1_p = 0.5,
+        conv1_num_filters = 32, conv1_filter_size = (3, 3), pool1_ds = (2, 2),
+        dropout1_p = 0.5,
         conv1_nonlinearity = rectify,
         conv2_num_filters = 64, conv2_filter_size=(3, 3), pool2_ds=(2, 2),
-        # dropout2_p = 0.5,
+        dropout2_p = 0.5,
         conv2_nonlinearity = rectify,
 
         hidden3_num_units=300,  # number of units in hidden layer
-        # dropout3_p = 0.5,
+        dropout3_p = 0.25,
         hidden3_nonlinearity=rectify,
 
         output_nonlinearity=tanh,  # output layer uses identity function
@@ -272,7 +300,7 @@ def create_net2():
         regression = True,  # flag to indicate we're dealing with regression problem
         max_epochs = 400,  # we want to train this many epochs
         eval_size = 0.1,
-        # batch_iterator_train = CNNFlipBatchIterator(batch_size = 128),
+        batch_iterator_train = CNNFlipBatchIterator(batch_size = 32, iterations = 16),
         # on_epoch_finished = [ # could have multiple callbacks.
         #         EpochFinishedCallback(0.02, 0.005),
         #     ],
