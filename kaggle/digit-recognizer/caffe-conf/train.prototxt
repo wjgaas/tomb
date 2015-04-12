@@ -20,53 +20,68 @@ name: "LeNet"
 #   }
 # }
 
-# layer {
-#   name: "mnist"
-#   type: "HDF5Data"
-#   top: "data"
-#   top: "label"
-#   include {
-#     phase: TRAIN
-#   }
-#   hdf5_data_param {
-#     # 文件里面包含HDF5文件名称列表
-#     # 可以参考caffe-prepare.py
-#     source: "train.list"
-#     batch_size: 42
-#     shuffle: true
-#   }
-# }
-
 layer {
   name: "mnist"
-  type: "MemoryData"
+  type: "HDF5Data"
   top: "data"
   top: "label"
   include {
     phase: TRAIN
   }
-  memory_data_param {
+  hdf5_data_param {
+    # see caffe-prepare.py
+    source: "train.list"
     batch_size: 42
-    channels: 1
-    height: 28
-    width: 28
+    shuffle: true
   }
 }
+
 layer {
   name: "mnist"
-  type: "MemoryData"
+  type: "HDF5Data"
   top: "data"
   top: "label"
   include {
-     phase: TEST
+    phase: TEST
   }
-  memory_data_param {
+  hdf5_data_param {
+    source: "test.list"
     batch_size: 42
-    channels: 1
-    height: 28
-    width: 28
+    shuffle: true
   }
 }
+
+# layer {
+#   name: "mnist"
+#   type: "MemoryData"
+#   top: "data"
+#   top: "label"
+#   include {
+#     phase: TRAIN
+#   }
+#   memory_data_param {
+#     batch_size: 42
+#     channels: 1
+#     height: 28
+#     width: 28
+#   }
+# }
+# layer {
+#   name: "mnist"
+#   type: "MemoryData"
+#   top: "data"
+#   top: "label"
+#   include {
+#      phase: TEST
+#   }
+#   memory_data_param {
+#     batch_size: 42
+#     channels: 1
+#     height: 28
+#     width: 28
+#   }
+# }
+
 layer {
   name: "conv1"
   type: "Convolution"
@@ -80,7 +95,7 @@ layer {
   }
   convolution_param {
     num_output: 32
-    kernel_size: 5
+    kernel_size: 3
     stride: 1
     weight_filler {
       type: "xavier"
@@ -98,7 +113,7 @@ layer {
   pooling_param {
     pool: MAX
     kernel_size: 2
-    stride: 2
+    stride: 1
   }
 }
 layer {
@@ -107,19 +122,19 @@ layer {
   bottom: "pool1"
   top: "relu1"
 }
-layer {
-  name: "drop1"
-  type: "Dropout"
-  bottom: "relu1"
-  top: "drop1"
-  dropout_param {
-    dropout_ratio: 0.5
-  }
-}
+# layer {
+#   name: "drop1"
+#   type: "Dropout"
+#   bottom: "relu1"
+#   top: "drop1"
+#   dropout_param {
+#     dropout_ratio: 0.5
+#   }
+# }
 layer {
   name: "conv2"
   type: "Convolution"
-  bottom: "drop1"
+  bottom: "relu1"
   top: "conv2"
   param {
     lr_mult: 1
@@ -129,7 +144,7 @@ layer {
   }
   convolution_param {
     num_output: 64
-    kernel_size: 5
+    kernel_size: 3
     stride: 1
     weight_filler {
       type: "xavier"
@@ -156,19 +171,19 @@ layer {
   bottom: "pool2"
   top: "relu2"
 }
-layer {
-  name: "drop2"
-  type: "Dropout"
-  bottom: "relu2"
-  top: "drop2"
-  dropout_param {
-    dropout_ratio: 0.5
-  }
-}
+# layer {
+#   name: "drop2"
+#   type: "Dropout"
+#   bottom: "relu2"
+#   top: "drop2"
+#   dropout_param {
+#     dropout_ratio: 0.5
+#   }
+# }
 layer {
   name: "ip1"
   type: "InnerProduct"
-  bottom: "drop2"
+  bottom: "relu2"
   top: "ip1"
   param {
     lr_mult: 1
@@ -192,19 +207,19 @@ layer {
   bottom: "ip1"
   top: "relu3"
 }
-layer {
-  name: "drop3"
-  type: "Dropout"
-  bottom: "relu3"
-  top: "drop3"
-  dropout_param {
-    dropout_ratio: 0.5
-  }
-}
+# layer {
+#   name: "drop3"
+#   type: "Dropout"
+#   bottom: "relu3"
+#   top: "drop3"
+#   dropout_param {
+#     dropout_ratio: 0.5
+#   }
+# }
 layer {
   name: "ip2"
   type: "InnerProduct"
-  bottom: "drop3"
+  bottom: "relu3"
   top: "ip2"
   param {
     lr_mult: 1
