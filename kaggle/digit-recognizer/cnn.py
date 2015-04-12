@@ -13,6 +13,7 @@ from matplotlib import pyplot
 from sklearn.metrics import accuracy_score
 from sklearn.utils import shuffle
 import h5py
+from nolearn.lasagne import BatchIterator
 
 def plot_loss(net):
     """
@@ -92,6 +93,39 @@ def create_ann():
     )
     return nn
 
+class MiniBatchIterator(BatchIterator):
+    def __init__(self, batch_size = 128, iterations = 32):
+        BatchIterator.__init__(self, batch_size)
+        self.iterations = iterations
+        self.X = None
+        self.y = None
+        self.cidx = 0
+        self.midx = 0
+
+    def __call__(self, X, y = None):
+        # reset data set.
+        if not (self.X is X and self.y is y):
+            self.cidx = 0
+            n_samples = X.shape[0]
+            bs = self.batch_size
+            self.midx = (n_samples + bs - 1) // bs
+        self.X, self.y = X, y
+        return self
+
+    def __iter__(self):
+        bs = self.batch_size
+        for i in range(0, self.iterations):
+            sl = slice(self.cidx * bs , (self.cidx + 1) * bs)
+            self.cidx += 1
+            # wrap up.
+            if self.cidx >= self.midx: self.cidx = 0
+            Xb = self.X[sl]
+            if self.y is not None:
+                yb = self.y[sl]
+            else:
+                yb = None
+            yield self.transform(Xb, yb)
+
 def create_cnn():
     nn = NeuralNet(
     layers = [  # three layers: one hidden layer
@@ -117,17 +151,24 @@ def create_cnn():
     # layer parameters:
     input_shape = (None, 1, 28, 28),  # 28x28 input pixels per batch
 
-    conv1_num_filters = 32, conv1_filter_size = (3, 3), pool1_ds = (2, 2), dropout1_p = 0.5,
-    conv2_num_filters = 64, conv2_filter_size=(2, 2), pool2_ds=(2, 2), dropout2_p = 0.5,
-    # conv3_num_filters = 128, conv3_filter_size = (2, 2), pool3_ds = (2, 2), dropout3_p = 0.5,
+    conv1_num_filters = 32, conv1_filter_size = (3, 3), pool1_ds = (2, 2),
+    conv1_nonlinearity = rectify,
+    dropout1_p = 0.5,
 
-    hidden4_num_units = 500, dropout4_p = 0.5,
+    conv2_num_filters = 64, conv2_filter_size=(3, 3), pool2_ds=(2, 2),
+    conv2_nonlinearity = rectify,
+    dropout2_p = 0.5,
 
-    output_num_units = 10,  # 10 labels
+    # conv3_num_filters = 128, conv3_filter_size = (2, 2), pool3_ds = (2, 2),
+    # conv3_nonlinearity = rectify,
+    # dropout3_p = 0.5,
 
-    conv1_nonlinearity = rectify, conv2_nonlinearity = rectify, conv3_nonlinearity = rectify,
+    hidden4_num_units = 500,
     hidden4_nonlinearity = rectify,
     # hidden4_nonlinearity = tanh,
+    dropout4_p = 0.25,
+
+    output_num_units = 10,  # 10 labels
     output_nonlinearity = softmax,  # output layer uses softmax function
 
     # optimization method:
@@ -139,6 +180,7 @@ def create_cnn():
 
     max_epochs = 200,  # we want to train this many epochs
     verbose = 1,
+    batch_iterator_train = MiniBatchIterator(batch_size = 128),
     )
     return nn
 
