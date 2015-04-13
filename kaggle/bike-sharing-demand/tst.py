@@ -73,7 +73,7 @@ def cross_val(reg, tr):
         train = np.logical_not(test)
         (tr_x, tt_x, tr_y, tt_y) = (X[train], X[test], Y[train], Y[test])
         reg.fit(tr_x, tr_y)
-        y = reg.predict(tt_x)                
+        y = reg.predict(tt_x)
         score = mean_squared_error(np.log(y + 1), np.log(np.around(tt_y[:,0] + tt_y[:,1] + 1))) ** 0.5
         print 'score = ', score
         scores.append(score)
