@@ -37,3 +37,4 @@ kaggle/digit-recognizer/*.csv
 *.zip
 kaggle/facial-keypoints-detection/*.csv
 kaggle/*/cookies.txt
+*.npy

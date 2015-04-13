@@ -6,6 +6,10 @@ import pandas as pd
 import numpy as np
 from sklearn.utils import shuffle
 import time
+import cPickle
+import os
+
+# http://danielnouri.org/notes/2014/12/17/using-convolutional-neural-nets-to-detect-facial-keypoints-tutorial/
 
 GlobalTimeStamp = 0
 def start_timer():
@@ -17,11 +21,21 @@ def print_timer(msg):
     print('%s: %.2f seconds' % (msg, _now - GlobalTimeStamp))
     GlobalTimeStamp = _now
 
-def read_train():
+RAW = None
+
+def read_train(cols= None):
     start_timer()
-    df = pd.read_csv('training.csv')
+    global RAW
+    if RAW is None:
+        df = pd.read_csv('training.csv')
+        df['Image'] = df['Image'].apply(lambda x: np.fromstring(x, sep = ' '))
+        print 'cached...'
+        RAW = df
+    else:
+        df = RAW
+    if cols: df = df[list(cols) + ['Image']]
     df = df.dropna()
-    df['Image'] = df['Image'].apply(lambda x: np.fromstring(x, sep = ' '))
+    print df.count()
     X = np.vstack(df['Image']) * 1.0 / 256
     y = (df[df.columns[:-1]] - 48) * 1.0 / 48
     X = X.astype(np.float32)
@@ -30,18 +44,34 @@ def read_train():
     print_timer('load training')
     return (X, y)
 
+TEST = None
+
 def read_test():
     start_timer()
-    df = pd.read_csv('test.csv')
-    df['Image'] = df['Image'].apply(lambda x: np.fromstring(x, sep = ' '))
-    X = np.vstack(df['Image']) * 1.0 / 256
+    global TEST
+    if TEST is None:
+        df = pd.read_csv('test.csv')
+        df['Image'] = df['Image'].apply(lambda x: np.fromstring(x, sep = ' '))
+        X = np.vstack(df['Image']) * 1.0 / 256
+        TEST = X
+    else:
+        X = TEST
     print_timer('load test')
     return X
 
-def predict(estimator, tx):
-    ty = estimator.predict(tx)
-    ty = (ty + 1) * 48.0
-    return ty
+def plot_loss(net1):
+    import matplotlib.pyplot as pyplot
+    train_loss = np.array([i["train_loss"] for i in net1.train_history_])
+    valid_loss = np.array([i["valid_loss"] for i in net1.train_history_])
+    pyplot.plot(train_loss, linewidth=3, label="train")
+    pyplot.plot(valid_loss, linewidth=3, label="valid")
+    pyplot.grid()
+    pyplot.legend()
+    pyplot.xlabel("epoch")
+    pyplot.ylabel("loss")
+    # pyplot.ylim(1e-3, 1e-2)
+    pyplot.yscale("log")
+    pyplot.show()
 
 def plot_sample(x, y, axis):
     img = x.reshape(96, 96)
@@ -63,13 +93,14 @@ def plot_samples(X, y):
     pyplot.show()
 
 # 这种操作尤其需要注意in-place的问题.
-def flip_op(X, y = None, indices = None):
-    flip_indices = [
+def flip_op(X, y = None, flip_indices = None):
+    if not flip_indices:
+        flip_indices = [
         (0, 2), (1, 3),
         (4, 8), (5, 9), (6, 10), (7, 11),
         (12, 16), (13, 17), (14, 18), (15, 19),
         (22, 24), (23, 25),
-    ]
+        ]
     # no copy at all!
     X = X.reshape((-1, 1, 96, 96))
     X = X[:,:,:,::-1]
@@ -91,26 +122,32 @@ def plot_flip(X, y):
         ys.append(y0[idx])
     plot_samples(np.array(xs), ys)
 
-def flip_augment(X, y, cnn = False):
+def flip_augment(X, y, flip_indices = None):
+    # no augmentation.
+    if flip_indices == (): return X, y
     X = X.reshape((-1, 1, 96, 96))
-    X0, y0 = flip_op(X, y)
+    X0, y0 = flip_op(X, y, flip_indices)
     nX = np.append(X, X0, axis = 0)
     ny = np.append(y, y0, axis = 0)
     return nX, ny
 
+INDEX_NAMES = "left_eye_center, right_eye_center, left_eye_inner_corner, left_eye_outer_corner, right_eye_inner_corner, right_eye_outer_corner, left_eyebrow_inner_end, left_eyebrow_outer_end, right_eyebrow_inner_end, right_eyebrow_outer_end, nose_tip, mouth_left_corner, mouth_right_corner, mouth_center_top_lip, mouth_center_bottom_lip".split(', ')
+_names = []
+INDEX_VALUES = {}
+_value = 0
+for _n in INDEX_NAMES:
+    _names.append(_n + '_x')
+    _names.append(_n + '_y')
+    INDEX_VALUES[_n + '_x'] = _value
+    INDEX_VALUES[_n + '_y'] = _value + 1
+    _value += 2
+INDEX_NAMES = _names
+
 def write_test(ty):
-    names = "left_eye_center, right_eye_center, left_eye_inner_corner, left_eye_outer_corner, right_eye_inner_corner, right_eye_outer_corner, left_eyebrow_inner_end, left_eyebrow_outer_end, right_eyebrow_inner_end, right_eyebrow_outer_end, nose_tip, mouth_left_corner, mouth_right_corner, mouth_center_top_lip, mouth_center_bottom_lip".split(', ')
-    name_dict = {}
-    idx = 0
-    for n in names:
-        name_dict[n + '_x'] = idx
-        idx += 1
-        name_dict[n + '_y'] = idx
-        idx += 1
     lt = pd.read_csv('IdLookupTable.csv')
     values = []
     for index, row in lt.iterrows():
-        values.append((row['RowId'], ty[row.ImageId - 1][name_dict[row.FeatureName]]))
+        values.append((row['RowId'], ty[row.ImageId - 1][INDEX_VALUES[row.FeatureName]]))
     submission = pd.DataFrame(values, columns = ('RowId', 'Location'))
     submission.to_csv('submission.csv', index = False)
 
@@ -138,6 +175,28 @@ class ANNFlipBatchIterator(BatchIterator):
         X0, y0 = flip_augment(X, y)
         X0 = X0.reshape((-1, 96 * 96))
         return X0, y0
+
+class EarlyStopping(object):
+    def __init__(self, patience=100):
+        self.patience = patience
+        self.best_valid = np.inf
+        self.best_valid_epoch = 0
+        self.best_weights = None
+
+    def __call__(self, nn, train_history):
+        current_valid = train_history[-1]['valid_loss']
+        current_epoch = train_history[-1]['epoch']
+        if current_valid < self.best_valid and \
+            (self.best_valid - current_valid) > 1e-6: # 不能变化过小.
+            self.best_valid = current_valid
+            self.best_valid_epoch = current_epoch
+            self.best_weights = [w.get_value() for w in nn.get_all_params()]
+        elif self.best_valid_epoch + self.patience < current_epoch:
+            print("Early stopping.")
+            print("Best valid loss was {:.6f} at epoch {}.".format(
+                self.best_valid, self.best_valid_epoch))
+            nn.load_weights_from(self.best_weights)
+            raise StopIteration()
 
 def create_net1():
     net1 = NeuralNet(
@@ -172,13 +231,159 @@ def create_net1():
         update_momentum=0.9,
 
         regression = True,  # flag to indicate we're dealing with regression problem
-        max_epochs = 1000,  # we want to train this many epochs
+        max_epochs = 2000,  # we want to train this many epochs
         eval_size = 0.1,
-        batch_iterator_train = ANNFlipBatchIterator(),
+        # batch_iterator_train = ANNFlipBatchIterator(),
+        on_epoch_finished = (EarlyStopping(5),),
         verbose=1
     )
     return net1
 
+SPECIALIST_SETTINGS = {
+    's0': # 0.002850
+    dict(
+        columns=(
+            'left_eye_center_x', 'left_eye_center_y',
+            'right_eye_center_x', 'right_eye_center_y',
+            ),
+        flip_indices=((0, 2), (1, 3)),
+        ),
+
+    's1': # 0.004231
+    dict(
+        columns=(
+            'nose_tip_x', 'nose_tip_y',
+            ),
+        flip_indices=(),
+        ),
+
+    's2': # 0.002498
+    dict(
+        columns=(
+            'mouth_left_corner_x', 'mouth_left_corner_y',
+            'mouth_right_corner_x', 'mouth_right_corner_y',
+            'mouth_center_top_lip_x', 'mouth_center_top_lip_y',
+            ),
+        flip_indices=((0, 2), (1, 3)),
+        ),
+
+    's3': # 0.005635
+    dict(
+        columns=(
+            'mouth_center_bottom_lip_x',
+            'mouth_center_bottom_lip_y',
+            ),
+        flip_indices=(),
+        ),
+
+    's4': # 0.001779
+    dict(
+        columns=(
+            'left_eye_inner_corner_x', 'left_eye_inner_corner_y',
+            'right_eye_inner_corner_x', 'right_eye_inner_corner_y',
+            'left_eye_outer_corner_x', 'left_eye_outer_corner_y',
+            'right_eye_outer_corner_x', 'right_eye_outer_corner_y',
+            ),
+        flip_indices=((0, 2), (1, 3), (4, 6), (5, 7)),
+        ),
+
+    's5': # 0.002209
+    dict(
+        columns=(
+            'left_eyebrow_inner_end_x', 'left_eyebrow_inner_end_y',
+            'right_eyebrow_inner_end_x', 'right_eyebrow_inner_end_y',
+            'left_eyebrow_outer_end_x', 'left_eyebrow_outer_end_y',
+            'right_eyebrow_outer_end_x', 'right_eyebrow_outer_end_y',
+            ),
+        flip_indices=((0, 2), (1, 3), (4, 6), (5, 7)),
+        ),
+    }
+
+create_net = create_net1
+
+# ~ 0.0017
+def train_default():
+    print 'train default...'
+    start_timer()
+    (X, y) = read_train()
+    print_timer('read train')
+    X, y = flip_augment(X, y)
+    X = X.reshape((-1, 96 * 96))
+    print_timer('flip augment')
+    nn = create_net()
+    # nn.max_epochs = 2
+    if os.path.exists('def.npy'): nn.load_weights_from('def.npy')
+    nn.fit(X, y)
+    print_timer('fit nn')
+    ws = [w.get_value() for w in nn.get_all_params()]
+    np.save('def.npy', ws)
+    print_timer('dump nn')
+
+def train_special():
+    for name in 's0 s1 s2 s3 s4 s5'.split(' '):
+        settings = SPECIALIST_SETTINGS[name]
+        start_timer()
+        print '>>>>>train spec %s...<<<<<' % (name)
+        cols = settings['columns']
+        X, y = read_train(cols)
+        print_timer('read train')
+        flip_indices = settings['flip_indices']
+        X, y = flip_augment(X, y, flip_indices)
+        X = X.reshape((-1, 96 * 96))
+        print_timer('flip augment')
+        nn = create_net()
+        nn.output_num_units = y.shape[1]
+        # nn.max_epochs = 2
+        if os.path.exists('def.npy'): nn.load_weights_from('def.npy')
+        if os.path.exists('%s.npy' % (name)): nn.load_weights_from('%s.npy' % (name))
+        nn.fit(X, y)
+        print_timer('fit nn')
+        ws = [w.get_value() for w in nn.get_all_params()]
+        np.save('%s.npy' % (name), ws)
+        print_timer('dump nn')
+
+def test_default():
+    tx = read_test()
+    nn = create_net()
+    nn.load_weights_from('def.npy')
+    ty = nn.predict(tx)
+    ty = (ty + 1) * 48.0
+    # 可以限制输出范围
+    # ty.clip(0, 96)
+    return ty
+
+def test_special():
+    tx = read_test()
+    specs = {}
+    for name in 's0 s1 s2 s3 s4 s5'.split(' '):
+        settings = SPECIALIST_SETTINGS[name]
+        nn = create_net()
+        nn.output_num_units = len(settings['columns'])
+        nn.load_weights_from('%s.npy' % (name))
+        ty = nn.predict(tx)
+        ty = (ty + 1) * 48.0
+        specs[name] = ty
+    return specs
+
+def test_ensemble(ty, specs):
+    # keep original values.
+    ty = ty.copy()
+    for n in INDEX_NAMES:
+        print n
+        cnt = 1
+        idx = INDEX_VALUES[n]
+        y = ty[:,idx]
+        for name in 's0 s1 s2 s3 s4 s5'.split(' '):
+            settings = SPECIALIST_SETTINGS[name]
+            columns = settings['columns']
+            if not n in columns: continue
+            idx2 = columns.index(n)
+            y2 = specs[name][:,idx2]
+            print y, y2
+        ty[:,idx] = (y + y2) * 0.5
+    return ty
+
+# -------------------- CNN --------------------
 CUDA_CONVNET = False
 if CUDA_CONVNET:
     from lasagne.layers.cuda_convnet import Conv2DCCLayer, MaxPool2DCCLayer
@@ -300,24 +505,10 @@ def create_net2():
         regression = True,  # flag to indicate we're dealing with regression problem
         max_epochs = 400,  # we want to train this many epochs
         eval_size = 0.1,
-        batch_iterator_train = CNNFlipBatchIterator(batch_size = 32, iterations = 16),
+        batch_iterator_train = CNNFlipBatchIterator(batch_size = 128, iterations = 16),
         # on_epoch_finished = [ # could have multiple callbacks.
         #         EpochFinishedCallback(0.02, 0.005),
         #     ],
         verbose=1,
     )
     return net2
-
-def plot_loss(net1):
-    import matplotlib.pyplot as pyplot
-    train_loss = np.array([i["train_loss"] for i in net1.train_history_])
-    valid_loss = np.array([i["valid_loss"] for i in net1.train_history_])
-    pyplot.plot(train_loss, linewidth=3, label="train")
-    pyplot.plot(valid_loss, linewidth=3, label="valid")
-    pyplot.grid()
-    pyplot.legend()
-    pyplot.xlabel("epoch")
-    pyplot.ylabel("loss")
-    # pyplot.ylim(1e-3, 1e-2)
-    pyplot.yscale("log")
-    pyplot.show()
