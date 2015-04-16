@@ -53,6 +53,7 @@ def read_test():
         df = pd.read_csv('test.csv')
         df['Image'] = df['Image'].apply(lambda x: np.fromstring(x, sep = ' '))
         X = np.vstack(df['Image']) * 1.0 / 256
+        X = X.astype(np.float32)
         TEST = X
     else:
         X = TEST
@@ -267,7 +268,7 @@ SPECIALIST_SETTINGS = {
         flip_indices=((0, 2), (1, 3)),
         ),
 
-    's3': # 0.005635, CNN: 0.583496
+    's3': # 0.005635, CNN: 0.004824
     dict(
         columns=(
             'mouth_center_bottom_lip_x',
@@ -276,7 +277,7 @@ SPECIALIST_SETTINGS = {
         flip_indices=(),
         ),
 
-    's4': # 0.001779, CNN: 0.001648
+    's4': # 0.001779, CNN: 0.001698
     dict(
         columns=(
             'left_eye_inner_corner_x', 'left_eye_inner_corner_y',
@@ -287,7 +288,7 @@ SPECIALIST_SETTINGS = {
         flip_indices=((0, 2), (1, 3), (4, 6), (5, 7)),
         ),
 
-    's5': # 0.002209, CNN: 0.001713
+    's5': # 0.002209, CNN: 0.001851
     dict(
         columns=(
             'left_eyebrow_inner_end_x', 'left_eyebrow_inner_end_y',
@@ -298,9 +299,6 @@ SPECIALIST_SETTINGS = {
         flip_indices=((0, 2), (1, 3), (4, 6), (5, 7)),
         ),
     }
-
-create_net = create_net1
-# create_net = create_net2
 
 # ~ 0.0017
 # CNN. ~ 0.001205
@@ -323,6 +321,7 @@ def train_default():
     print_timer('dump nn')
 
 def train_special():
+    # CNN, s5不能使用def.npy训练结果，这个结果非常差
     for name in 's0 s1 s2 s3 s4 s5'.split(' '):
         settings = SPECIALIST_SETTINGS[name]
         start_timer()
@@ -348,6 +347,8 @@ def train_special():
 
 def test_default():
     tx = read_test()
+    if create_net is create_net1: tx = tx.reshape((-1, 96 * 96))
+    else: tx = tx.reshape((-1, 1, 96, 96))
     nn = create_net()
     nn.load_weights_from('def.npy')
     ty = nn.predict(tx)
@@ -358,6 +359,8 @@ def test_default():
 
 def test_special():
     tx = read_test()
+    if create_net is create_net1: tx = tx.reshape((-1, 96 * 96))
+    else: tx = tx.reshape((-1, 1, 96, 96))
     specs = {}
     for name in 's0 s1 s2 s3 s4 s5'.split(' '):
         settings = SPECIALIST_SETTINGS[name]
@@ -445,6 +448,7 @@ def Tshared(k): return theano.shared(k)
 # 每次完成迭代进行权重调整. 可以让初始权重大一些，但是到后面逐渐变小
 # 这样到训练后期loss可以变得更加平滑，而不是一直地震荡，这样我们可以提早结束训练
 # note(dirlt): 不过感觉效果不是特别显著，因为训练后期weight-delta也在不断变小.
+# note(dirlt @ 2015-04-17): 在GPU上跑确实发现了这个问题，在后期不断地有震荡出现，从0.0018 -> 0.002 -> 0.0018
 class EpochFinishedCallback:
     def __init__(self, lr_start, lr_stop):
         self.lr_start = lr_start
@@ -462,7 +466,7 @@ class EpochFinishedCallback:
 # training和validation error差别很大的时候，可以认为出现overfitting. 首先想到的是应该增加数据，然后考虑regularization(weight-decay or dropout).
 # 直到overfitting现象消失，然后再考虑增加模型复杂度来增加精确度，之后继续出现overfitting，这样不断迭代改进。
 
-# note(dirlt): 借用同事GPU搞了一把.
+# note(dirlt @ 2015-04-17): 借用同事GPU搞了一把. 效果确实不错ANN = 3.08932, CNN = 2.67626
 def create_net2():
     net2 = NeuralNet(
         # three layers: one hidden layer
@@ -518,3 +522,6 @@ def create_net2():
         verbose=1,
     )
     return net2
+
+# create_net = create_net1
+create_net = create_net2
