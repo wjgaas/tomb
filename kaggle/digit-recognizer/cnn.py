@@ -32,12 +32,17 @@ def plot_loss(net):
     pyplot.yscale("log")
     pyplot.show()
 
+RAW = None
+
 def read_train():
+    global RAW
+    if RAW: return RAW
     train_df = pd.read_csv('./train.csv')
     train_label = train_df.values[:, 0]
     train_data = train_df.values[:, 1:] * 1.0 / 256
     (X, y) = (train_data.astype(np.float32), train_label.astype(np.int32))
     (X, y) = shuffle(X, y, random_state = 42)
+    RAW = (X, y)
     return (X, y)
 
 def read_train2():
@@ -48,9 +53,14 @@ def read_train2():
     (X, y) = shuffle(data, labels, random_state = 42)
     return (X, y)
 
+TEST = None
 def read_test():
+    global TEST
+    if TEST: return TEST
     test_df = pd.read_csv('./test.csv')
-    return test_df.values.astype(np.float32) * 1.0 / 256
+    X = test_df.values.astype(np.float32) * 1.0 / 256
+    TEST = X
+    return X
 
 CUDA_CONVNET = False
 if CUDA_CONVNET:
@@ -126,6 +136,19 @@ class MiniBatchIterator(BatchIterator):
                 yb = None
             yield self.transform(Xb, yb)
 
+from skimage.transform import rotate
+class CNNRotateBatchIterator(BatchIterator):
+    def __init__(self, batch_size = 128, iterations = 32):
+        BatchIterator.__init__(self, batch_size)
+
+    def transform(self, X, y):
+        n = X.shape[0]
+        angles = np.random.uniform(-16, 16, n)
+        x2 = zip(X.reshape((-1, 28, 28)), angles)
+        x3 = np.array(map(lambda x: rotate(x[0], x[1]), x2))
+        x3 = x3.astype(np.float32).reshape((-1, 1, 28, 28))
+        return x3, y
+
 def create_cnn():
     nn = NeuralNet(
     layers = [  # three layers: one hidden layer
@@ -133,18 +156,18 @@ def create_cnn():
 
         ('conv1', Conv2DLayer),
         ('pool1', MaxPool2DLayer),
-        ('dropout1', layers.DropoutLayer),
+        # ('dropout1', layers.DropoutLayer),
 
         ('conv2', Conv2DLayer),
         ('pool2', MaxPool2DLayer),
-        ('dropout2', layers.DropoutLayer),
+        # ('dropout2', layers.DropoutLayer),
 
         # ('conv3', Conv2DLayer),
         # ('pool3', MaxPool2DLayer),
         # ('dropout3', layers.DropoutLayer),
 
         ('hidden4', layers.DenseLayer),
-        ('dropout4', layers.DropoutLayer),
+        # ('dropout4', layers.DropoutLayer),
 
         ('output', layers.DenseLayer),
         ],
@@ -153,11 +176,11 @@ def create_cnn():
 
     conv1_num_filters = 32, conv1_filter_size = (3, 3), pool1_ds = (2, 2),
     conv1_nonlinearity = rectify,
-    dropout1_p = 0.5,
+    # dropout1_p = 0.5,
 
     conv2_num_filters = 64, conv2_filter_size=(3, 3), pool2_ds=(2, 2),
     conv2_nonlinearity = rectify,
-    dropout2_p = 0.5,
+    # dropout2_p = 0.5,
 
     # conv3_num_filters = 128, conv3_filter_size = (2, 2), pool3_ds = (2, 2),
     # conv3_nonlinearity = rectify,
@@ -166,7 +189,7 @@ def create_cnn():
     hidden4_num_units = 500,
     hidden4_nonlinearity = rectify,
     # hidden4_nonlinearity = tanh,
-    dropout4_p = 0.25,
+    # dropout4_p = 0.25,
 
     output_num_units = 10,  # 10 labels
     output_nonlinearity = softmax,  # output layer uses softmax function
@@ -180,7 +203,7 @@ def create_cnn():
 
     max_epochs = 200,  # we want to train this many epochs
     verbose = 1,
-    batch_iterator_train = MiniBatchIterator(batch_size = 128),
+    batch_iterator_train = CNNRotateBatchIterator(batch_size = 128, iterations = 4)
     )
     return nn
 
