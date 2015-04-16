@@ -240,7 +240,7 @@ def create_net1():
     return net1
 
 SPECIALIST_SETTINGS = {
-    's0': # 0.002850
+    's0': # 0.002850, CNN: 0.002207
     dict(
         columns=(
             'left_eye_center_x', 'left_eye_center_y',
@@ -249,7 +249,7 @@ SPECIALIST_SETTINGS = {
         flip_indices=((0, 2), (1, 3)),
         ),
 
-    's1': # 0.004231
+    's1': # 0.004231, CNN: 0.003402
     dict(
         columns=(
             'nose_tip_x', 'nose_tip_y',
@@ -257,7 +257,7 @@ SPECIALIST_SETTINGS = {
         flip_indices=(),
         ),
 
-    's2': # 0.002498
+    's2': # 0.002498, CNN: 0.001772
     dict(
         columns=(
             'mouth_left_corner_x', 'mouth_left_corner_y',
@@ -267,7 +267,7 @@ SPECIALIST_SETTINGS = {
         flip_indices=((0, 2), (1, 3)),
         ),
 
-    's3': # 0.005635
+    's3': # 0.005635, CNN: 0.583496
     dict(
         columns=(
             'mouth_center_bottom_lip_x',
@@ -276,7 +276,7 @@ SPECIALIST_SETTINGS = {
         flip_indices=(),
         ),
 
-    's4': # 0.001779
+    's4': # 0.001779, CNN: 0.001648
     dict(
         columns=(
             'left_eye_inner_corner_x', 'left_eye_inner_corner_y',
@@ -287,7 +287,7 @@ SPECIALIST_SETTINGS = {
         flip_indices=((0, 2), (1, 3), (4, 6), (5, 7)),
         ),
 
-    's5': # 0.002209
+    's5': # 0.002209, CNN: 0.001713
     dict(
         columns=(
             'left_eyebrow_inner_end_x', 'left_eyebrow_inner_end_y',
@@ -300,15 +300,18 @@ SPECIALIST_SETTINGS = {
     }
 
 create_net = create_net1
+# create_net = create_net2
 
 # ~ 0.0017
+# CNN. ~ 0.001205
 def train_default():
     print 'train default...'
     start_timer()
     (X, y) = read_train()
     print_timer('read train')
     X, y = flip_augment(X, y)
-    X = X.reshape((-1, 96 * 96))
+    if create_net is create_net1: X = X.reshape((-1, 96 * 96))
+    else: X = X.reshape((-1, 1, 96, 96))
     print_timer('flip augment')
     nn = create_net()
     # nn.max_epochs = 2
@@ -329,7 +332,8 @@ def train_special():
         print_timer('read train')
         flip_indices = settings['flip_indices']
         X, y = flip_augment(X, y, flip_indices)
-        X = X.reshape((-1, 96 * 96))
+        if create_net is create_net1: X = X.reshape((-1, 96 * 96))
+        else: X = X.reshape((-1, 1, 96, 96))
         print_timer('flip augment')
         nn = create_net()
         nn.output_num_units = y.shape[1]
@@ -458,6 +462,7 @@ class EpochFinishedCallback:
 # training和validation error差别很大的时候，可以认为出现overfitting. 首先想到的是应该增加数据，然后考虑regularization(weight-decay or dropout).
 # 直到overfitting现象消失，然后再考虑增加模型复杂度来增加精确度，之后继续出现overfitting，这样不断迭代改进。
 
+# note(dirlt): 借用同事GPU搞了一把.
 def create_net2():
     net2 = NeuralNet(
         # three layers: one hidden layer
@@ -466,14 +471,14 @@ def create_net2():
 
         ('conv1', Conv2DLayer),
         ('pool1', MaxPool2DLayer),
-        ('dropout1', layers.DropoutLayer),
+        # ('dropout1', layers.DropoutLayer),
 
         ('conv2', Conv2DLayer),
         ('pool2', MaxPool2DLayer),
-        ('dropout2', layers.DropoutLayer),
+        # ('dropout2', layers.DropoutLayer),
 
         ('hidden3', layers.DenseLayer),
-        ('dropout3', layers.DropoutLayer),
+        # ('dropout3', layers.DropoutLayer),
 
         ('output', layers.DenseLayer),
         ],
@@ -484,14 +489,14 @@ def create_net2():
         input_shape=(None, 1, 96, 96),  # 96x96 input pixels per batch
 
         conv1_num_filters = 32, conv1_filter_size = (3, 3), pool1_ds = (2, 2),
-        dropout1_p = 0.5,
+        # dropout1_p = 0.5,
         conv1_nonlinearity = rectify,
         conv2_num_filters = 64, conv2_filter_size=(3, 3), pool2_ds=(2, 2),
-        dropout2_p = 0.5,
+        # dropout2_p = 0.5,
         conv2_nonlinearity = rectify,
 
         hidden3_num_units=300,  # number of units in hidden layer
-        dropout3_p = 0.25,
+        # dropout3_p = 0.25,
         hidden3_nonlinearity=rectify,
 
         output_nonlinearity=tanh,  # output layer uses identity function
@@ -505,7 +510,8 @@ def create_net2():
         regression = True,  # flag to indicate we're dealing with regression problem
         max_epochs = 400,  # we want to train this many epochs
         eval_size = 0.1,
-        batch_iterator_train = CNNFlipBatchIterator(batch_size = 128, iterations = 16),
+        # batch_iterator_train = CNNFlipBatchIterator(batch_size = 128, iterations = 16),
+        on_epoch_finished = (EarlyStopping(5),),
         # on_epoch_finished = [ # could have multiple callbacks.
         #         EpochFinishedCallback(0.02, 0.005),
         #     ],
