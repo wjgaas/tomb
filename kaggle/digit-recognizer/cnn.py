@@ -9,13 +9,13 @@ from lasagne import layers
 from lasagne.nonlinearities import softmax, rectify, tanh
 from lasagne.updates import momentum, nesterov_momentum, sgd, rmsprop
 import numpy as np
-from matplotlib import pyplot
 from sklearn.metrics import accuracy_score
 from sklearn.utils import shuffle
-import h5py
+# import h5py
 from nolearn.lasagne import BatchIterator
 
 def plot_loss(net):
+    from matplotlib import pyplot
     """
     Plot the training loss and validation loss versus epoch iterations with respect to
     a trained neural network.
@@ -45,13 +45,13 @@ def read_train():
     RAW = (X, y)
     return (X, y)
 
-def read_train2():
-    # see caffe-prepare.py
-    f = h5py.File('train.hdf5')
-    data = f['data'].value.astype(np.float32)
-    labels = f['label'].value.astype(np.int32)
-    (X, y) = shuffle(data, labels, random_state = 42)
-    return (X, y)
+# def read_train2():
+#     # see caffe-prepare.py
+#     f = h5py.File('train.hdf5')
+#     data = f['data'].value.astype(np.float32)
+#     labels = f['label'].value.astype(np.int32)
+#     (X, y) = shuffle(data, labels, random_state = 42)
+#     return (X, y)
 
 TEST = None
 def read_test():
@@ -156,18 +156,18 @@ def create_cnn():
 
         ('conv1', Conv2DLayer),
         ('pool1', MaxPool2DLayer),
-        # ('dropout1', layers.DropoutLayer),
+        ('dropout1', layers.DropoutLayer),
 
         ('conv2', Conv2DLayer),
         ('pool2', MaxPool2DLayer),
-        # ('dropout2', layers.DropoutLayer),
+        ('dropout2', layers.DropoutLayer),
 
         # ('conv3', Conv2DLayer),
         # ('pool3', MaxPool2DLayer),
         # ('dropout3', layers.DropoutLayer),
 
         ('hidden4', layers.DenseLayer),
-        # ('dropout4', layers.DropoutLayer),
+        ('dropout4', layers.DropoutLayer),
 
         ('output', layers.DenseLayer),
         ],
@@ -176,11 +176,11 @@ def create_cnn():
 
     conv1_num_filters = 32, conv1_filter_size = (3, 3), pool1_ds = (2, 2),
     conv1_nonlinearity = rectify,
-    # dropout1_p = 0.5,
+    dropout1_p = 0.5,
 
     conv2_num_filters = 64, conv2_filter_size=(3, 3), pool2_ds=(2, 2),
     conv2_nonlinearity = rectify,
-    # dropout2_p = 0.5,
+    dropout2_p = 0.5,
 
     # conv3_num_filters = 128, conv3_filter_size = (2, 2), pool3_ds = (2, 2),
     # conv3_nonlinearity = rectify,
@@ -189,7 +189,7 @@ def create_cnn():
     hidden4_num_units = 500,
     hidden4_nonlinearity = rectify,
     # hidden4_nonlinearity = tanh,
-    # dropout4_p = 0.25,
+    dropout4_p = 0.5,
 
     output_num_units = 10,  # 10 labels
     output_nonlinearity = softmax,  # output layer uses softmax function
