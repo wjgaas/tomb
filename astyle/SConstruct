@@ -9,10 +9,11 @@ env=Environment(CPPPATH = ['..'],
 env.StaticLibrary('astyle',Glob('*.cc') + Glob('*.cpp'))
 
 test_env = env.Clone()
-test_env.Append(LIBPATH = ['.','../common/'])
+test_env.Append(LIBPATH = ['.'])
+# test_env.Append(LIBPATH = ['.','../common/'])
 test_env.Append(LIBS = ['astyle',
-                        'common',
-                        'rt',
+                        # 'common',
+                        # 'rt',
                         'pthread'])
 
 for cc in glob.glob('test/*.cc'):

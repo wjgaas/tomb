@@ -4,7 +4,7 @@
 
 #include <string>
 #include "astyle/my_astyle.h"
-#include "common/log.h"
+// #include "common/log.h"
 
 static const char* nasty_code = "int main(){\nprintf(\"hello,world\");\nreturn 0;\n}\n";
 

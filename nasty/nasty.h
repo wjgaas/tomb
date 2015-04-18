@@ -5,10 +5,10 @@
 #ifndef __CC_NASTY_NASTY_H__
 #define __CC_NASTY_NASTY_H__
 
-#include <cstdio>
 #include <string>
 #include <vector>
 #include <ostream>
+#include <cstdio>
 #include <cerrno>
 
 #define SERRNO (strerror(errno))
