@@ -71,7 +71,7 @@
 
 #include <cstdio>
 #include <string>
-#include "common/log.h"
+// #include "common/log.h"
 #include "nasty/nasty.h"
 using namespace nasty;
 

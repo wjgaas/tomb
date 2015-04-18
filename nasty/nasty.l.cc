@@ -451,7 +451,7 @@ static yyconst flex_int16_t yy_chk[38] =
 #line 2 "nasty.lexer"
 
 #include <string>
-#include "common/log.h"
+// #include "common/log.h"
 #include "nasty/nasty.h"
 using namespace nasty;
 #include "nasty/nasty.y.hh"

@@ -8,7 +8,7 @@
 using namespace nasty;
 
 int main() {
-    Parser p("test.in");
+    Parser p("test/test.in");
     Expr* e = p.run();
     const std::string s = e->toString();
     printf("%s\n", s.c_str());

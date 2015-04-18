@@ -4,7 +4,7 @@
 
 #include <cassert>
 #include <sstream>
-#include "common/log.h"
+// #include "common/log.h"
 #include "nasty/nasty.h"
 #include "nasty/nasty.y.hh"
 #include "nasty/nasty.l.hh"

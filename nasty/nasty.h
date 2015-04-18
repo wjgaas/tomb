@@ -5,9 +5,19 @@
 #ifndef __CC_NASTY_NASTY_H__
 #define __CC_NASTY_NASTY_H__
 
+#include <cstdio>
 #include <string>
 #include <vector>
 #include <ostream>
+#include <cerrno>
+
+#define SERRNO (strerror(errno))
+#define SERRNO2(n) (strerror(n))
+#define DEBUG(fmt, ...) fprintf(stderr, "[DEBUG]"fmt"\n",  ##__VA_ARGS__)
+#define NOTICE(fmt, ...) fprintf(stderr, "[NOTICE]"fmt"\n",  ##__VA_ARGS__)
+#define TRACE(fmt, ...) fprintf(stderr, "[TRACE]"fmt"\n",  ##__VA_ARGS__)
+#define WARNING(fmt, ...) fprintf(stderr, "[WARNING]"fmt"\n", ##__VA_ARGS__)
+#define FATAL(fmt, ...) fprintf(stderr, "[FATAL]"fmt"\n", ##__VA_ARGS__)
 
 namespace nasty {
 
@@ -53,6 +63,8 @@ public:
     void appendExpr(Expr* ex);
     ~Expr();
     std::string toString() const ;
+    int line() const { return line_; }
+    int column() const { return column_; }
 private:
     friend class Parser;
     void write(std::ostream& os) const;
