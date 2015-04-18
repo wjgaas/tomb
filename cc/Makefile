@@ -13,8 +13,3 @@ runnable_so.exe:runnable_so.o
 
 clean:
 	rm -rf *.exe *.o
-
-test_proto_dynamic.exe:test_proto_dynamic.o sample.pb.o
-	g++ -o $@ $^ -lprotobuf
-sample.pb.cc sample.pb.h:sample.proto
-	protoc --cpp_out=. $^
