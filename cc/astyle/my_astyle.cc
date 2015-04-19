@@ -4,7 +4,6 @@
 
 #include "astyle/astyle.h"
 #include "astyle/my_astyle.h"
-// #include "common/log.h"
 
 static void AstyleError(int /*number*/, char* mesg) {
     FATAL("astyle failed(%s)", mesg);

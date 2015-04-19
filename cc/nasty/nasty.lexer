@@ -1,7 +1,6 @@
 %{
 
 #include <string>
-// #include "common/log.h"
 #include "nasty/nasty.h"
 using namespace nasty;
 #include "nasty/nasty.y.hh"

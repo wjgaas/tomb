@@ -451,7 +451,6 @@ static yyconst flex_int16_t yy_chk[38] =
 #line 2 "nasty.lexer"
 
 #include <string>
-// #include "common/log.h"
 #include "nasty/nasty.h"
 using namespace nasty;
 #include "nasty/nasty.y.hh"
@@ -463,7 +462,7 @@ yylval->expr_ = new(std::nothrow) Expr(type, yytext, yyleng, yylloc->first_line,
 
 #define YY_DECL int yylex(YYSTYPE* yylval_param,YYLTYPE* yylloc_param,yyscan_t yyscanner,Parser* parser)
 
-#line 467 "nasty.l.cc"
+#line 466 "nasty.l.cc"
 
 #define INITIAL 0
 
@@ -709,9 +708,9 @@ YY_DECL
 	register int yy_act;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
-#line 31 "nasty.lexer"
+#line 30 "nasty.lexer"
 
-#line 715 "nasty.l.cc"
+#line 714 "nasty.l.cc"
 
     yylval = yylval_param;
 
@@ -800,52 +799,52 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 32 "nasty.lexer"
+#line 31 "nasty.lexer"
 { DEBUG("got '('"); return LBRACE; }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 33 "nasty.lexer"
+#line 32 "nasty.lexer"
 { DEBUG("got ')'"); return RBRACE; }
 	YY_BREAK
 case 3:
 /* rule 3 can match eol */
 YY_RULE_SETUP
-#line 34 "nasty.lexer"
+#line 33 "nasty.lexer"
 { SAVE(Expr::STR); return STR; }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 35 "nasty.lexer"
+#line 34 "nasty.lexer"
 { SAVE(Expr::ID); return ID; }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 36 "nasty.lexer"
+#line 35 "nasty.lexer"
 { SAVE(Expr::FLT); return FLT; }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 37 "nasty.lexer"
+#line 36 "nasty.lexer"
 { SAVE(Expr::INT); return INT; }
 	YY_BREAK
 case 7:
 /* rule 7 can match eol */
 YY_RULE_SETUP
-#line 38 "nasty.lexer"
+#line 37 "nasty.lexer"
 {}
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 39 "nasty.lexer"
+#line 38 "nasty.lexer"
 yyterminate();
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 41 "nasty.lexer"
+#line 40 "nasty.lexer"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 849 "nasty.l.cc"
+#line 848 "nasty.l.cc"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2024,7 +2023,7 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 41 "nasty.lexer"
+#line 40 "nasty.lexer"
 
 
 

@@ -6,6 +6,7 @@
 #define __CC_ASTYLE_MYASTYLE_H__
 
 #include <string>
+#include <cstdlib>
 #include <cstdio>
 #include <cerrno>
 

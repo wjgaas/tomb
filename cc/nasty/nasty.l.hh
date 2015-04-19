@@ -351,7 +351,7 @@ extern int yylex \
 #undef YY_DECL
 #endif
 
-#line 41 "nasty.lexer"
+#line 40 "nasty.lexer"
 
 
 #line 358 "nasty.l.hh"
