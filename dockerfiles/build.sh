@@ -12,9 +12,13 @@ build_redis() {
     build_base
     docker build -t tomb/ubuntu:redis redis
 }
+build_home() {
+    build_base
+    docker build -t tomb/ubuntu:home home
+}
 
 cmd=${1:-"base"}
-case $1 in 
+case $1 in
     base)
         build_base
         ;;
@@ -24,7 +28,9 @@ case $1 in
     redis)
         build_redis
         ;;
+    home)
+        build_home
+        ;;
     *)
         build_base
 esac
-
