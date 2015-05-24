@@ -20,3 +20,9 @@ assert(item.y == 30)
 items.append(item)
 
 assert(len(items) == 2)
+
+items2 = [items[0], items[1]]
+handle_item_array(items2)
+
+op = items[0].get_opaque()
+print op
