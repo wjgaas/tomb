@@ -17,6 +17,12 @@ class Item {
     int x;
     int y;
     Opqaue op;
+    Item(const Item& item) {
+        cerr << "copy ctor" << endl;
+    }
+    Item& operator=(const Item& item) {
+        cerr << "operator = " << endl;
+    }
     Item(int x, int y = 10): x(x), y(y) {}
     void echo(const string& arg = "world") {
         cerr << arg << endl;

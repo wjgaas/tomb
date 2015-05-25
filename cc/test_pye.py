@@ -26,3 +26,10 @@ handle_item_array(items2)
 
 op = items[0].get_opaque()
 print op
+
+# test copy ctor or operator =
+print item.x, item.y
+a = item
+a.x += 10
+a.y += 20
+print item.x, item.y
