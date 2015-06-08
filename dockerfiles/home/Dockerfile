@@ -5,11 +5,12 @@ VOLUME ["/home/dirlt/KuaiPan"]
 EXPOSE 80
 EXPOSE 22
 
-USER dirlt
-RUN touch .vmflag
-USER root
-
 RUN apt-get install -y zsh
 RUN chsh -s /bin/zsh dirlt
+
+USER dirlt
+RUN touch .vmflag
+RUN ln -s KuaiPan/private .private
+USER root
 
 CMD /usr/sbin/sshd -D
