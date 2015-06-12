@@ -39,4 +39,4 @@ kaggle/facial-keypoints-detection/*.csv
 kaggle/*/cookies.txt
 *.npy
 *.tgz
-
+*.deb
